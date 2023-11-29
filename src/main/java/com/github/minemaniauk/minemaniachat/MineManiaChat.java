@@ -20,23 +20,116 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.github.kerbity.kerb.event.Priority;
+import com.github.minemaniauk.api.MineManiaAPI;
+import com.github.minemaniauk.api.MineManiaAPIContract;
+import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
+import com.github.minemaniauk.api.kerb.event.useraction.UserActionHasPermissionListEvent;
+import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsOnlineEvent;
+import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsVanishedEvent;
+import com.github.minemaniauk.api.kerb.event.useraction.UserActionMessageEvent;
+import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
+import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
-import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.plugin.Plugin;
-import org.slf4j.Logger;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
         version = "1.0.0"
 )
-public class MineManiaChat {
+public class MineManiaChat implements MineManiaAPIContract {
+
+    private static @NotNull MineManiaChat instance;
+
+    private final @NotNull ProxyServer server;
+    private final @NotNull ComponentLogger logger;
+    private final @NotNull Configuration configuration;
+    private final @NotNull MineManiaAPI api;
+    private final @NotNull ChatHandler chatHandler;
 
     @Inject
-    private Logger logger;
+    public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
+        MineManiaChat.instance = this;
+        this.server = server;
+        this.logger = componentLogger;
 
-    @Subscribe
-    public void onProxyInitialization(ProxyInitializeEvent event) {
+        // Set up the configuration file.
+        this.configuration = ConfigurationFactory.YAML
+                .create(folder.toFile(), "config.yml")
+                .setDefaultPath("config.yml");
+
+        // Set up the mine mania api connection.
+        this.api = MineManiaAPI.createAndSet(
+                this.configuration,
+                this
+        );
+
+        // Create a new chat handler.
+        this.chatHandler = new ChatHandler(this.configuration);
+        this.api.getKerbClient().registerListener(Priority.HIGH, this.chatHandler);
+    }
+
+    @Override
+    public @Nullable UserActionHasPermissionListEvent onHasPermission(@NotNull UserActionHasPermissionListEvent event) {
+        return null;
+    }
+
+    @Override
+    public @Nullable UserActionIsOnlineEvent onIsOnline(@NotNull UserActionIsOnlineEvent event) {
+        return null;
+    }
+
+    @Override
+    public @Nullable UserActionIsVanishedEvent onIsVanished(@NotNull UserActionIsVanishedEvent event) {
+        return null;
+    }
+
+    @Override
+    public @Nullable UserActionMessageEvent onMessage(@NotNull UserActionMessageEvent event) {
+        return null;
+    }
+
+    @Override
+    public @NotNull PlayerChatEvent onChatEvent(@NotNull PlayerChatEvent event) {
+        this.logger.info("<gray>[" + String.join(",", event.getServerWhiteList()) + "]"
+                + event.getFormattedMessage()
+        );
+        return event;
+    }
+
+    /**
+     * Used to get the instance of the proxy server.
+     *
+     * @return The instance of the proxy server.
+     */
+    public @NotNull ProxyServer getProxyServer() {
+        return this.server;
+    }
+
+    /**
+     * Used to get the instance of the logger.
+     *
+     * @return The instance of the logger.
+     */
+    public @NotNull ComponentLogger getLogger() {
+        return this.logger;
+    }
+
+    /**
+     * Used to get the instance of the
+     * mine mania chat plugin.
+     *
+     * @return The active mine mania chat instance.
+     */
+    public static @NotNull MineManiaChat getInstance() {
+        return MineManiaChat.instance;
     }
 }

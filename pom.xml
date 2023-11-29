@@ -170,6 +170,12 @@
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+
+        <!-- GitHub Projects -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -178,6 +184,13 @@
             <artifactId>velocity-api</artifactId>
             <version>3.2.0-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- MineManiaAPI -->
+        <dependency>
+            <groupId>com.github.MineManiaUK</groupId>
+            <artifactId>MineManiaAPI</artifactId>
+            <version>1.1.0</version>
         </dependency>
     </dependencies>
 </project>
