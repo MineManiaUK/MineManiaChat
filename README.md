@@ -1,2 +1,2 @@
 # MineManiaChat
-A chat plugin for velocity
+A chat plugin for velocity.
