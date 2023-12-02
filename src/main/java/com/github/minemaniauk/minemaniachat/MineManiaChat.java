@@ -63,8 +63,9 @@ public class MineManiaChat implements MineManiaAPIContract {
 
         // Set up the configuration file.
         this.configuration = ConfigurationFactory.YAML
-                .create(folder.toFile(), "config.yml")
+                .create(folder.toFile(), "config")
                 .setDefaultPath("config.yml");
+        this.configuration.load();
 
         // Set up the mine mania api connection.
         this.api = MineManiaAPI.createAndSet(

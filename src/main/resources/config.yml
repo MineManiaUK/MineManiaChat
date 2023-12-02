@@ -11,6 +11,8 @@ kerb:
   client_name: ""
   server_port: 5000
   server_address: ""
+  server_certificate_path: ""
+  client_certificate_path: ""
   password: ""
   max_wait_time_millis: 400
 
