@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ MineManiaAPI
+  ~ MineManiaChat
   ~ Used for interacting with the database and message broker.
   ~
   ~ Copyright (C) 2023  MineManiaUK Staff
@@ -129,7 +129,7 @@
             </resource>
         </resources>
         <plugins>
-            <!-- Sqlite Driver -->
+            <!-- Shade -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

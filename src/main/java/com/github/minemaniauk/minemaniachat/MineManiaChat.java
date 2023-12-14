@@ -1,5 +1,5 @@
 /*
- * MineManiaAPI
+ * MineManiaChat
  * Used for interacting with the database and message broker.
  *
  * Copyright (C) 2023  MineManiaUK Staff
