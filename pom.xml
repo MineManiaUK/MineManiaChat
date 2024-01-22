@@ -26,7 +26,7 @@
 
     <groupId>com.github.minemaniauk</groupId>
     <artifactId>MineManiaChat</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.1</version>
     <packaging>jar</packaging>
 
     <name>MineManiaChat</name>
@@ -61,7 +61,7 @@
         <dependency>
             <groupId>com.github.MineManiaUK</groupId>
             <artifactId>MineManiaAPI</artifactId>
-            <version>1.5.1</version>
+            <version>1.8.1</version>
         </dependency>
     </dependencies>
 

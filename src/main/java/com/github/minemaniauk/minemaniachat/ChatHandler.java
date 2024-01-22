@@ -21,7 +21,7 @@
 package com.github.minemaniauk.minemaniachat;
 
 import com.github.kerbity.kerb.client.listener.EventListener;
-import com.github.kerbity.kerb.event.Event;
+import com.github.kerbity.kerb.packet.event.Event;
 import com.github.minemaniauk.api.format.ChatFormatPriority;
 import com.github.minemaniauk.api.kerb.event.player.PlayerPostChatEvent;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;

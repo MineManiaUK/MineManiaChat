@@ -20,7 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.github.kerbity.kerb.event.Priority;
+import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
 import com.github.minemaniauk.api.MineManiaAPIContract;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
@@ -28,6 +28,7 @@ import com.github.minemaniauk.api.kerb.event.useraction.UserActionHasPermissionL
 import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsOnlineEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsVanishedEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.UserActionMessageEvent;
+import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
 @Plugin(
         id = "minemaniachat",
@@ -76,6 +78,16 @@ public class MineManiaChat implements MineManiaAPIContract {
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration);
         this.api.getKerbClient().registerListener(Priority.HIGH, this.chatHandler);
+    }
+
+    @Override
+    public @NotNull MineManiaUser getUser(@NotNull UUID uuid) {
+        return new MineManiaUser(uuid, this.server.getPlayer(uuid).orElseThrow().getUsername());
+    }
+
+    @Override
+    public @NotNull MineManiaUser getUser(@NotNull String name) {
+        return new MineManiaUser(this.server.getPlayer(name).orElseThrow().getUniqueId(), name);
     }
 
     @Override
