@@ -34,3 +34,6 @@ channels:
   main:
     - hub
     - smp
+
+banned_words:
+  - fuck

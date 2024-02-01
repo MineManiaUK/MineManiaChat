@@ -32,8 +32,12 @@ import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
@@ -116,6 +120,22 @@ public class MineManiaChat implements MineManiaAPIContract {
                 + event.getFormattedMessage()
         );
         return event;
+    }
+
+    @Subscribe
+    public void onPlayerJoinEvent(PlayerChooseInitialServerEvent event) {
+        if (new User(event.getPlayer()).isVanished()) return;
+        for (Player player : this.getProxyServer().getAllPlayers()) {
+            new User(player).sendMessage("&a+ &7" + event.getPlayer().getUsername());
+        }
+    }
+
+    @Subscribe
+    public void onPlayerLeave(DisconnectEvent event) {
+        if (new User(event.getPlayer()).isVanished()) return;
+        for (Player player : this.getProxyServer().getAllPlayers()) {
+            new User(player).sendMessage("&c- &7" + event.getPlayer().getUsername());
+        }
     }
 
     /**

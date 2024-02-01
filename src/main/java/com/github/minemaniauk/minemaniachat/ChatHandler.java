@@ -30,6 +30,7 @@ import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,6 +66,15 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                     .addPrefix(formatSection.getSection(key).getString("prefix", ""), ChatFormatPriority.HIGH)
                     .addPostfix(formatSection.getSection(key).getString("postfix", ""), ChatFormatPriority.HIGH);
             break;
+        }
+
+        for (String string : this.configuration.getListString("banned_words", new ArrayList<>())) {
+            if (event.getMessage().toLowerCase().contains(string.toLowerCase())) {
+                Optional<Player> optional = VelocityAdapter.getPlayer(event.getUser());
+                optional.ifPresent(value -> new User(value).sendMessage("&c&l> &7Please do not include banned words such as &f" + string + "&7 in your message."));
+                event.setCancelled(true);
+                return event;
+            }
         }
 
         // Loop though channels.
