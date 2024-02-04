@@ -137,15 +137,14 @@ public class User {
         // If they are unable to vanish return false
         if (this.isNotVanishable()) return false;
 
-        ProxyServerInterface proxyServerInterface = new ProxyServerInterface(MineManiaChat.getInstance().getProxyServer());
         RegisteredServer server = this.getConnectedServer();
 
         // If they are not connected to a server they are vanished
         if (server == null) return true;
 
-        Player unableToVanishPlayer = proxyServerInterface.getNotVanishablePlayer(server);
+        Player unableToVanishPlayer = MineManiaChat.getInstance().getNotVanishablePlayer(server);
 
-        // If there are no players online that can not vanish
+        // If there are no players online that cannot vanish,
         // we assume they are vanished.
         if (unableToVanishPlayer == null) return true;
 

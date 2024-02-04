@@ -34,19 +34,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Used to handle chat events.
+ * When the post-chat event is called it will
+ * handle the formatting and filtering.
+ */
 public class ChatHandler implements EventListener<PlayerPostChatEvent> {
 
     private final @NotNull Configuration configuration;
 
+    /**
+     * Used to create a new instance of the chat handler.
+     *
+     * @param configuration The instance of the configuration
+     *                      to format and filter the chat.
+     */
     public ChatHandler(@NotNull Configuration configuration) {
         this.configuration = configuration;
     }
 
     @Override
-    public @Nullable Event onEvent(PlayerPostChatEvent event) {
-        ConfigurationSection formatSection = this.configuration.getSection("format");
+    public @Nullable Event onEvent(@NotNull PlayerPostChatEvent event) {
         ConfigurationSection channelSection = this.configuration.getSection("channels");
-        Optional<Player> optionalPlayer = VelocityAdapter.getPlayer(event.getUser());
+        Optional<Player> optionalPlayer = MineManiaChat.getInstance().getPlayer(event.getUser());
 
         // Check if the player is online.
         if (optionalPlayer.isEmpty()) {
@@ -58,6 +68,35 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         // Get the instance of the player.
         Player player = optionalPlayer.get();
 
+        // Format the message.
+        this.appendChatFormatting(event, player);
+
+        // Check for banned words.
+        if (this.containsBannedWords(event.getMessage())) {
+            new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
+            event.setCancelled(true);
+            return event;
+        }
+
+        // Loop though channels and append the correct ones.
+        for (String key : channelSection.getKeys()) {
+            List<String> serverList = channelSection.getListString(key);
+            if (!serverList.contains(event.getSource().getName())) continue;
+            event.addWhitelistedServer(serverList);
+        }
+
+        return event;
+    }
+
+    /**
+     * Used to append chat formatting to the message.
+     *
+     * @param event The instance of the chat event.
+     * @param player The instance of the player.
+     */
+    public void appendChatFormatting(@NotNull PlayerPostChatEvent event, @NotNull Player player) {
+        ConfigurationSection formatSection = this.configuration.getSection("format");
+
         // Loop though chat formatting.
         for (String key : formatSection.getKeys()) {
             String permission = "chat." + key;
@@ -67,23 +106,45 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                     .addPostfix(formatSection.getSection(key).getString("postfix", ""), ChatFormatPriority.HIGH);
             break;
         }
+    }
 
-        for (String string : this.configuration.getListString("banned_words", new ArrayList<>())) {
-            if (event.getMessage().toLowerCase().contains(string.toLowerCase())) {
-                Optional<Player> optional = VelocityAdapter.getPlayer(event.getUser());
-                optional.ifPresent(value -> new User(value).sendMessage("&c&l> &7Please do not include banned words such as &f" + string + "&7 in your message."));
-                event.setCancelled(true);
-                return event;
-            }
+    /**
+     * Used to check if a message contains banned words.
+     *
+     * @param message The instance of the message.
+     * @return True if it contains bad words.
+     */
+    public boolean containsBannedWords(@NotNull String message) {
+        List<String> bannedPhrases = this.configuration.getListString("banned_words", new ArrayList<>());
+
+        // Loop though each word in the message.
+        for (final String bannedPhrase : bannedPhrases) {
+
+            // Find the position of the phrase in the message.
+            int bannedPhraseIndex = message.indexOf(bannedPhrase);
+
+            // Check if the banned phrase does not exist.
+            if (bannedPhraseIndex == -1) continue;
+
+            boolean startOfMessage = bannedPhraseIndex == 0;
+            boolean endOfMessage = bannedPhraseIndex + bannedPhrase.length() >= message.length();
+
+            // Check if the phrase is the entire message.
+            if (message.equals(bannedPhrase)) return true;
+
+            // Check if the message contains the banned phrase
+            // and spaces before and after.
+            if (message.contains(" " + bannedPhrase + " ")) return true;
+
+            // Check if the phrase is at the start of
+            // the message and has a space after.
+            if (startOfMessage && message.contains(bannedPhrase + " ")) return true;
+
+            // Check if the phrase is at the end of
+            // the message and has a space before.
+            if (endOfMessage && message.contains(" " + bannedPhrase)) return true;
         }
 
-        // Loop though channels.
-        for (String key : channelSection.getKeys()) {
-            List<String> serverList = channelSection.getListString(key);
-            if (!serverList.contains(event.getSource().getName())) continue;
-            event.addWhitelistedServer(serverList);
-        }
-
-        return event;
+        return false;
     }
 }

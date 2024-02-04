@@ -1,5 +1,7 @@
 package com.github.minemaniauk.minemaniachat;
 
+import com.github.minemaniauk.minemaniachat.dependency.MiniPlaceholdersAdapter;
+import com.github.minemaniauk.minemaniachat.dependency.MiniPlaceholdersDependency;
 import com.github.smuddgge.squishydatabase.console.Console;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;

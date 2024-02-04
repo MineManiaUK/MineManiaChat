@@ -39,12 +39,13 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.UUID;
+import java.util.*;
 
 @Plugin(
         id = "minemaniachat",
@@ -136,6 +137,134 @@ public class MineManiaChat implements MineManiaAPIContract {
         for (Player player : this.getProxyServer().getAllPlayers()) {
             new User(player).sendMessage("&c- &7" + event.getPlayer().getUsername());
         }
+    }
+
+    /**
+     * Used to get the instance of a player from a mine mania user.
+     *
+     * @param user The instance of the user.
+     * @return The optional player instance.
+     * It will be empty if the player is not online on this server.
+     */
+    public @NotNull Optional<Player> getPlayer(@NotNull MineManiaUser user) {
+        return MineManiaChat.getInstance().getProxyServer().getPlayer(user.getUniqueId());
+    }
+
+    /**
+     * Used to get the instance of a mine mania user from a player.
+     *
+     * @param player The instance of the player.
+     * @return The requested mine mania user instance.
+     */
+    public @NotNull MineManiaUser getUser(@NotNull Player player) {
+        return new MineManiaUser(player.getUniqueId(), player.getUsername());
+    }
+
+    /**
+     * Used to get a player that is unable to vanish on a server.
+     *
+     * @param registeredServer The instance of the server.
+     * @return The requested player.
+     */
+    public @Nullable Player getNotVanishablePlayer(RegisteredServer registeredServer) {
+        for (Player player : registeredServer.getPlayersConnected()) {
+            User user = new User(player);
+
+            if (user.isNotVanishable()) return player;
+        }
+
+        return null;
+    }
+
+    /**
+     * Used to get a filtered list of players.
+     * <ul>
+     *     <li>Filters players with the permission.</li>
+     * </ul>
+     *
+     * @param permission      The permission to filter.
+     * @param permissions     The possible permissions to filter.
+     * @param includeVanished If the filtered players should
+     *                        include vanished players.
+     * @return List of filtered players.
+     */
+    public @NotNull List<User> getFilteredPlayers(String permission, List<String> permissions, boolean includeVanished) {
+        List<User> players = new ArrayList<>();
+
+        for (Player player : this.server.getAllPlayers()) {
+            User user = new User(player);
+
+            // If the player has the permission node
+            if (!user.hasPermission(permission)) continue;
+
+            // Check if it's there the highest permission
+            if (!Objects.equals(user.getHighestPermission(permissions), permission)) continue;
+
+            // If includes vanished players and they are not vanished
+            if (!includeVanished && user.isVanished()) continue;
+
+            players.add(user);
+        }
+
+        return players;
+    }
+
+    /**
+     * Used to get a filtered list of players on a server.
+     * <ul>
+     *     <li>Filters players with the permission.</li>
+     * </ul>
+     *
+     * @param server          The instance of a server.
+     * @param permission      The permission to filter.
+     * @param includeVanished If the filtered players should
+     *                        include vanished players.
+     * @return List of filtered players.
+     */
+    public @NotNull List<User> getFilteredPlayers(RegisteredServer server, String permission, boolean includeVanished) {
+        List<User> players = new ArrayList<>();
+
+        for (Player player : server.getPlayersConnected()) {
+            User user = new User(player);
+
+            // If the player has the permission node
+            if (!user.hasPermission(permission)) continue;
+
+            // If includes vanished players and they are not vanished
+            if (!includeVanished && user.isVanished()) continue;
+
+            players.add(user);
+        }
+
+        return players;
+    }
+
+    /**
+     * Used to get a list of registered server names.
+     *
+     * @return The list of server names.
+     */
+    public @NotNull List<String> getServerNames() {
+        List<String> servers = new ArrayList<>();
+
+        for (RegisteredServer server : MineManiaChat.getInstance().getProxyServer().getAllServers()) {
+            servers.add(server.getServerInfo().getName());
+        }
+
+        return servers;
+    }
+
+    /**
+     * Used to get a random player from a server.
+     *
+     * @param server The instance of a server.
+     * @return A random player.
+     */
+    public @Nullable User getRandomUser(RegisteredServer server) {
+        for (Player player : server.getPlayersConnected()) {
+            return new User(player);
+        }
+        return null;
     }
 
     /**
