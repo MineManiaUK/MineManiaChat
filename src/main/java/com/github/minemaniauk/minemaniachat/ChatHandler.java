@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,7 +92,7 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
     /**
      * Used to append chat formatting to the message.
      *
-     * @param event The instance of the chat event.
+     * @param event  The instance of the chat event.
      * @param player The instance of the player.
      */
     public void appendChatFormatting(@NotNull PlayerPostChatEvent event, @NotNull Player player) {
@@ -115,10 +116,15 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
      * @return True if it contains bad words.
      */
     public boolean containsBannedWords(@NotNull String message) {
+        message = String.join("", Arrays.stream(message.toLowerCase().split(""))
+                .filter(character -> character.matches("([a-z]|[A-Z]| )"))
+                .toList()
+        );
+        System.out.println(message);
         List<String> bannedPhrases = this.configuration.getListString("banned_words", new ArrayList<>());
 
         // Loop though each word in the message.
-        for (final String bannedPhrase : bannedPhrases) {
+        for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {
 
             // Find the position of the phrase in the message.
             int bannedPhraseIndex = message.indexOf(bannedPhrase);
