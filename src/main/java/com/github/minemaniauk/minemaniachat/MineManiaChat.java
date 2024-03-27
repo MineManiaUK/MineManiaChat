@@ -24,10 +24,7 @@ import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
 import com.github.minemaniauk.api.MineManiaAPIContract;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
-import com.github.minemaniauk.api.kerb.event.useraction.UserActionHasPermissionListEvent;
-import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsOnlineEvent;
-import com.github.minemaniauk.api.kerb.event.useraction.UserActionIsVanishedEvent;
-import com.github.minemaniauk.api.kerb.event.useraction.UserActionMessageEvent;
+import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
@@ -113,6 +110,15 @@ public class MineManiaChat implements MineManiaAPIContract {
     @Override
     public @Nullable UserActionMessageEvent onMessage(@NotNull UserActionMessageEvent event) {
         return null;
+    }
+
+    @Override
+    public @Nullable UserActionTeleportEvent onTeleport(@NotNull UserActionTeleportEvent event) {
+        this.getPlayer(event.getUser()).ifPresent(user -> {
+            RegisteredServer registeredServer = event.getLocation().getLocation(new VelocityLocationConverter());
+            user.createConnectionRequest(registeredServer).connect();
+        });
+        return (UserActionTeleportEvent) event.setComplete(true);
     }
 
     @Override
