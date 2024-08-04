@@ -20,9 +20,15 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.github.kerbity.kerb.client.listener.EventListener;
+import com.github.kerbity.kerb.packet.event.Event;
 import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
 import com.github.minemaniauk.api.MineManiaAPIContract;
+import com.github.minemaniauk.api.database.collection.GameRoomCollection;
+import com.github.minemaniauk.api.database.record.GameRoomRecord;
+import com.github.minemaniauk.api.game.Arena;
+import com.github.minemaniauk.api.kerb.event.GetOnlinePlayersRequest;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
@@ -80,6 +86,14 @@ public class MineManiaChat implements MineManiaAPIContract {
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration);
         this.api.getKerbClient().registerListener(Priority.HIGH, this.chatHandler);
+
+        this.api.getKerbClient().registerListener(Priority.LOW, new EventListener<GetOnlinePlayersRequest>() {
+            @Override
+            public @Nullable GetOnlinePlayersRequest onEvent(GetOnlinePlayersRequest event) {
+                event.addOnlinePlayers(MineManiaChat.this.server.getAllPlayers().stream().map(Player::getUniqueId).toList());
+                return event;
+            }
+        });
     }
 
     @Override
@@ -139,10 +153,30 @@ public class MineManiaChat implements MineManiaAPIContract {
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
+
+        this.handelGameRoom(event);
+
         if (new User(event.getPlayer()).isVanished()) return;
         for (Player player : this.getProxyServer().getAllPlayers()) {
             new User(player).sendMessage("&c- &7" + event.getPlayer().getUsername());
         }
+    }
+
+    private void handelGameRoom(DisconnectEvent event) {
+        final GameRoomRecord gameRoomRecord = this.api.getDatabase()
+                .getTable(GameRoomCollection.class)
+                .getGameRoomFromOwner(event.getPlayer().getUniqueId())
+                .orElse(null);
+
+        if (gameRoomRecord == null) return;
+
+        // Message players that you were kicked from game room.
+        gameRoomRecord.getPlayers().forEach(player -> player.getActions()
+                .sendMessage("&7&l> &7You were kicked from &f" + event.getPlayer().getUsername() + "'s &7game room because they disconnected from the server.")
+        );
+
+        // Remove the game room.
+        this.api.getDatabase().getTable(GameRoomCollection.class).removeRecord(gameRoomRecord);
     }
 
     /**
