@@ -33,8 +33,10 @@ import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
+import com.github.smuddgge.squishyconfiguration.implementation.YamlConfiguration;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
@@ -43,6 +45,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +56,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "1.0.0"
+        version = "2.0.0 Preview"
 )
 public class MineManiaChat implements MineManiaAPIContract {
 
@@ -70,6 +73,8 @@ public class MineManiaChat implements MineManiaAPIContract {
         MineManiaChat.instance = this;
         this.server = server;
         this.logger = componentLogger;
+
+
 
         // Set up the configuration file.
         this.configuration = ConfigurationFactory.YAML
@@ -94,6 +99,15 @@ public class MineManiaChat implements MineManiaAPIContract {
                 return event;
             }
         });
+
+        CommandManager cm = getProxyServer().getCommandManager();
+
+        var meta = cm.metaBuilder("clearchat")
+                .aliases("cc")
+                .build();
+
+        cm.register(meta , new ChatClear());
+
     }
 
     @Override
@@ -145,7 +159,6 @@ public class MineManiaChat implements MineManiaAPIContract {
 
     @Subscribe
     public void onPlayerJoinEvent(PlayerChooseInitialServerEvent event) {
-        if (new User(event.getPlayer()).isVanished()) return;
         for (Player player : this.getProxyServer().getAllPlayers()) {
             new User(player).sendMessage("&a+ &7" + event.getPlayer().getUsername());
         }
@@ -153,30 +166,9 @@ public class MineManiaChat implements MineManiaAPIContract {
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
-
-        this.handelGameRoom(event);
-
-        if (new User(event.getPlayer()).isVanished()) return;
         for (Player player : this.getProxyServer().getAllPlayers()) {
             new User(player).sendMessage("&c- &7" + event.getPlayer().getUsername());
         }
-    }
-
-    private void handelGameRoom(DisconnectEvent event) {
-        final GameRoomRecord gameRoomRecord = this.api.getDatabase()
-                .getTable(GameRoomCollection.class)
-                .getGameRoomFromOwner(event.getPlayer().getUniqueId())
-                .orElse(null);
-
-        if (gameRoomRecord == null) return;
-
-        // Message players that you were kicked from game room.
-        gameRoomRecord.getPlayers().forEach(player -> player.getActions()
-                .sendMessage("&7&l> &7You were kicked from &f" + event.getPlayer().getUsername() + "'s &7game room because they disconnected from the server.")
-        );
-
-        // Remove the game room.
-        this.api.getDatabase().getTable(GameRoomCollection.class).removeRecord(gameRoomRecord);
     }
 
     /**
@@ -200,21 +192,6 @@ public class MineManiaChat implements MineManiaAPIContract {
         return new MineManiaUser(player.getUniqueId(), player.getUsername());
     }
 
-    /**
-     * Used to get a player that is unable to vanish on a server.
-     *
-     * @param registeredServer The instance of the server.
-     * @return The requested player.
-     */
-    public @Nullable Player getNotVanishablePlayer(RegisteredServer registeredServer) {
-        for (Player player : registeredServer.getPlayersConnected()) {
-            User user = new User(player);
-
-            if (user.isNotVanishable()) return player;
-        }
-
-        return null;
-    }
 
     /**
      * Used to get a filtered list of players.
@@ -224,11 +201,10 @@ public class MineManiaChat implements MineManiaAPIContract {
      *
      * @param permission      The permission to filter.
      * @param permissions     The possible permissions to filter.
-     * @param includeVanished If the filtered players should
      *                        include vanished players.
      * @return List of filtered players.
      */
-    public @NotNull List<User> getFilteredPlayers(String permission, List<String> permissions, boolean includeVanished) {
+    public @NotNull List<User> getFilteredPlayers(String permission, List<String> permissions) {
         List<User> players = new ArrayList<>();
 
         for (Player player : this.server.getAllPlayers()) {
@@ -240,8 +216,6 @@ public class MineManiaChat implements MineManiaAPIContract {
             // Check if it's there the highest permission
             if (!Objects.equals(user.getHighestPermission(permissions), permission)) continue;
 
-            // If includes vanished players and they are not vanished
-            if (!includeVanished && user.isVanished()) continue;
 
             players.add(user);
         }
@@ -257,11 +231,10 @@ public class MineManiaChat implements MineManiaAPIContract {
      *
      * @param server          The instance of a server.
      * @param permission      The permission to filter.
-     * @param includeVanished If the filtered players should
      *                        include vanished players.
      * @return List of filtered players.
      */
-    public @NotNull List<User> getFilteredPlayers(RegisteredServer server, String permission, boolean includeVanished) {
+    public @NotNull List<User> getFilteredPlayers(RegisteredServer server, String permission) {
         List<User> players = new ArrayList<>();
 
         for (Player player : server.getPlayersConnected()) {
@@ -269,9 +242,6 @@ public class MineManiaChat implements MineManiaAPIContract {
 
             // If the player has the permission node
             if (!user.hasPermission(permission)) continue;
-
-            // If includes vanished players and they are not vanished
-            if (!includeVanished && user.isVanished()) continue;
 
             players.add(user);
         }
@@ -324,6 +294,14 @@ public class MineManiaChat implements MineManiaAPIContract {
     public @NotNull ComponentLogger getLogger() {
         return this.logger;
     }
+
+    /**
+     * Used to get instance of MineMania chat config
+     *
+     * @return The instance of MineMania chat config
+     */
+
+    public Configuration getConfig() { return this.configuration; }
 
     /**
      * Used to get the instance of the

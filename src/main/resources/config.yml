@@ -20,6 +20,10 @@ database:
   connection_string: ""
   database_name: ""
 
+
+# Clear Chat Lines
+clear-chat-lines: 100
+
 # In order of priority.
 # The first one will have the most priority.
 format:
@@ -36,4 +40,5 @@ channels:
     - smp
 
 banned_words:
-  - fuck
+  - BannedWord1
+  - BannedWord2

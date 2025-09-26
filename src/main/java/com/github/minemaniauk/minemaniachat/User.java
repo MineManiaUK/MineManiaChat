@@ -3,6 +3,8 @@ package com.github.minemaniauk.minemaniachat;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import de.myzelyam.api.vanish.VanishAPI;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.title.Title;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,41 +128,8 @@ public class User {
     }
 
 
-    /**
-     * Used to check if a user is vanished.
-     *
-     * @return True if they are vanished.
-     */
-    public boolean isVanished() {
-        if (this.player == null) return false;
 
-        // If they are unable to vanish return false
-        if (this.isNotVanishable()) return false;
 
-        RegisteredServer server = this.getConnectedServer();
-
-        // If they are not connected to a server they are vanished
-        if (server == null) return true;
-
-        Player unableToVanishPlayer = MineManiaChat.getInstance().getNotVanishablePlayer(server);
-
-        // If there are no players online that cannot vanish,
-        // we assume they are vanished.
-        if (unableToVanishPlayer == null) return true;
-
-        // Check if this player can be seen on the tab list by
-        // players that cannot vanish.
-        return !unableToVanishPlayer.getTabList().containsEntry(this.player.getUniqueId());
-    }
-
-    /**
-     * Used to check if a user is able to vanish.
-     *
-     * @return True if the player is able to vanish.
-     */
-    public boolean isNotVanishable() {
-        return !this.hasPermission("leaf.vanishable");
-    }
 
     /**
      * Used to send a user a message.

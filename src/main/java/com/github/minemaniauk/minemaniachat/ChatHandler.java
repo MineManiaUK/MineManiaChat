@@ -20,6 +20,10 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.eduardomcb.discord.webhook.WebhookClient;
+import com.eduardomcb.discord.webhook.WebhookManager;
+import com.eduardomcb.discord.webhook.models.Embed;
+import com.eduardomcb.discord.webhook.models.Field;
 import com.github.kerbity.kerb.client.listener.EventListener;
 import com.github.kerbity.kerb.packet.event.Event;
 import com.github.minemaniauk.api.format.ChatFormatPriority;
@@ -30,10 +34,11 @@ import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.awt.*;
+import java.sql.Time;
+import java.time.Instant;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Used to handle chat events.
@@ -56,37 +61,43 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
 
     @Override
     public @Nullable Event onEvent(@NotNull PlayerPostChatEvent event) {
-        ConfigurationSection channelSection = this.configuration.getSection("channels");
-        Optional<Player> optionalPlayer = MineManiaChat.getInstance().getPlayer(event.getUser());
 
-        // Check if the player is online.
-        if (optionalPlayer.isEmpty()) {
-            MineManiaChat.getInstance().getLogger().warn("[ChatEvent] Attempted to get player from user but the player was not online.");
-            event.setCancelled(true);
+
+            ConfigurationSection channelSection = this.configuration.getSection("channels");
+            Optional<Player> optionalPlayer = MineManiaChat.getInstance().getPlayer(event.getUser());
+
+            // Check if the player is online.
+            if (optionalPlayer.isEmpty()) {
+                MineManiaChat.getInstance().getLogger().warn("[ChatEvent] Attempted to get player from user but the player was not online.");
+                event.setCancelled(true);
+                return event;
+            }
+
+            // Get the instance of the player.
+            Player player = optionalPlayer.get();
+
+            // Format the message.
+            this.appendChatFormatting(event, player);
+
+            // Check for banned words.
+                if (this.containsBannedWords(event.getMessage())) {
+                    new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
+                    notifyStaff(player, event.getMessage());
+                    event.setCancelled(true);
+                    return event;
+                }
+
+
+
+
+            // Loop though channels and append the correct ones.
+            for (String key : channelSection.getKeys()) {
+                List<String> serverList = channelSection.getListString(key);
+                if (!serverList.contains(event.getSource().getName())) continue;
+                event.addWhitelistedServer(serverList);
+            }
+
             return event;
-        }
-
-        // Get the instance of the player.
-        Player player = optionalPlayer.get();
-
-        // Format the message.
-        this.appendChatFormatting(event, player);
-
-        // Check for banned words.
-        if (this.containsBannedWords(event.getMessage())) {
-            new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
-            event.setCancelled(true);
-            return event;
-        }
-
-        // Loop though channels and append the correct ones.
-        for (String key : channelSection.getKeys()) {
-            List<String> serverList = channelSection.getListString(key);
-            if (!serverList.contains(event.getSource().getName())) continue;
-            event.addWhitelistedServer(serverList);
-        }
-
-        return event;
     }
 
     /**
@@ -152,5 +163,16 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         }
 
         return false;
+    }
+
+    public void notifyStaff(Player player ,String message){
+        Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
+
+        for (Player p : allPlayers){
+            if (p.hasPermission("chat.notify")){
+                User u = new User(p);
+                u.sendMessage("&c Player " + player.getUsername() + " Sent Message with Banned words\n" + message );
+            }
+        }
     }
 }
