@@ -46,6 +46,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,11 +103,8 @@ public class MineManiaChat implements MineManiaAPIContract {
 
         CommandManager cm = getProxyServer().getCommandManager();
 
-        var meta = cm.metaBuilder("clearchat")
-                .aliases("cc")
-                .build();
-
-        cm.register(meta , new ChatClear());
+        cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
+        cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
 
     }
 
@@ -159,15 +157,44 @@ public class MineManiaChat implements MineManiaAPIContract {
 
     @Subscribe
     public void onPlayerJoinEvent(PlayerChooseInitialServerEvent event) {
-        for (Player player : this.getProxyServer().getAllPlayers()) {
-            new User(player).sendMessage("&a+ &7" + event.getPlayer().getUsername());
+        if (event.getPlayer().hasPermission("chat.joinmessage.disable")){
+            sendJoinMessage(event.getPlayer(), true);
         }
+        else { sendJoinMessage(event.getPlayer(), false);  }
     }
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
-        for (Player player : this.getProxyServer().getAllPlayers()) {
-            new User(player).sendMessage("&c- &7" + event.getPlayer().getUsername());
+        if (event.getPlayer().hasPermission("chat.joinmessage.disable")){;
+            sendLeaveMessage(event.getPlayer(), true);
+        }
+        else { sendLeaveMessage(event.getPlayer(), false);  }
+    }
+
+    private void sendJoinMessage(Player player, boolean staffOnly){
+        for (Player p : this.getProxyServer().getAllPlayers()) {
+            if (!staffOnly){
+                new User(p).sendMessage("&a+ &7" + player.getUsername());
+            }
+            else {
+                if (p.hasPermission("chat.joinmessage.alert")){
+                    new User(p).sendMessage("&a+ &7" + player.getUsername());
+                }
+            }
+
+        }
+    }
+    private void sendLeaveMessage(Player player, boolean staffOnly){
+        for (Player p : this.getProxyServer().getAllPlayers()) {
+            if (!staffOnly){
+                new User(p).sendMessage("&c- &7" + player.getUsername());
+            }
+            else {
+                if (p.hasPermission("chat.joinmessage.alert")){
+                    new User(p).sendMessage("&c- &7" + player.getUsername());
+                }
+            }
+
         }
     }
 
