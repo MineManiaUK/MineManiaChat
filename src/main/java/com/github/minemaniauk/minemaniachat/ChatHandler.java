@@ -73,6 +73,10 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 return event;
             }
 
+            if (event.getMessage().startsWith("[event cancelled]")){
+                event.setCancelled(true);
+            }
+
             // Get the instance of the player.
             Player player = optionalPlayer.get();
 
