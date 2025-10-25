@@ -21,6 +21,11 @@ database:
   database_name: ""
 
 
+perspective-testing:
+  enabled: false
+  api-key:
+  discord-webhook:
+
 # Clear Chat Lines
 clear-chat-lines: 100
 

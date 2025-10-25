@@ -96,6 +96,8 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 event.addWhitelistedServer(serverList);
             }
 
+        MineManiaChat.getInstance().getPerspectiveLogger().log(event.getUser().getName() ,event.getMessage());
+
             return event;
     }
 

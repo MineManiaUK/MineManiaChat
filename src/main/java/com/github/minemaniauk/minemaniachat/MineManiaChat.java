@@ -21,19 +21,15 @@
 package com.github.minemaniauk.minemaniachat;
 
 import com.github.kerbity.kerb.client.listener.EventListener;
-import com.github.kerbity.kerb.packet.event.Event;
 import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
 import com.github.minemaniauk.api.MineManiaAPIContract;
-import com.github.minemaniauk.api.database.collection.GameRoomCollection;
-import com.github.minemaniauk.api.database.record.GameRoomRecord;
-import com.github.minemaniauk.api.game.Arena;
 import com.github.minemaniauk.api.kerb.event.GetOnlinePlayersRequest;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
+import com.github.minemaniauk.minemaniachat.perspectiveapi.PerspectiveLogger;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
-import com.github.smuddgge.squishyconfiguration.implementation.YamlConfiguration;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
@@ -45,8 +41,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import de.myzelyam.api.vanish.VelocityVanishAPI;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +62,7 @@ public class MineManiaChat implements MineManiaAPIContract {
     private final @NotNull Configuration configuration;
     private final @NotNull MineManiaAPI api;
     private final @NotNull ChatHandler chatHandler;
+    private PerspectiveLogger perspectiveLogger;
 
     @Inject
     public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
@@ -92,6 +87,30 @@ public class MineManiaChat implements MineManiaAPIContract {
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration);
         this.api.getKerbClient().registerListener(Priority.HIGH, this.chatHandler);
+
+        try {
+            boolean enabled = getConfig().getBoolean("perspective-testing.enabled"); // ✅ fixed key
+
+            if (enabled) {
+                // Prefer config value; fallback to env var if not present
+                String apiKey = getConfig().getString("perspective-testing.api-key");
+
+                String webhook = getConfig().getString("perspective-testing.discord-webhook");
+
+                if (apiKey == null || apiKey.isBlank()) {
+                    logger.warn("[MineManiaChat] Perspective testing is enabled but no API key was provided. " +
+                            "Set 'perspective-testing.api-key' in config.yml or PERSPECTIVE_API_KEY env var. " +
+                            "Perspective will be disabled.");
+                } else {
+                    this.perspectiveLogger = new PerspectiveLogger(apiKey, webhook);
+                    logger.info("[MineManiaChat] Perspective testing enabled.");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MineManiaChat] Failed to initialize Perspective testing. Continuing without it.", e);
+        }
+
+
 
         this.api.getKerbClient().registerListener(Priority.LOW, new EventListener<GetOnlinePlayersRequest>() {
             @Override
@@ -302,6 +321,10 @@ public class MineManiaChat implements MineManiaAPIContract {
             return new User(player);
         }
         return null;
+    }
+
+    public PerspectiveLogger getPerspectiveLogger(){
+        return this.perspectiveLogger;
     }
 
     /**
