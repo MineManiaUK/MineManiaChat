@@ -61,8 +61,6 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
 
     @Override
     public @Nullable Event onEvent(@NotNull PlayerPostChatEvent event) {
-
-
             ConfigurationSection channelSection = this.configuration.getSection("channels");
             Optional<Player> optionalPlayer = MineManiaChat.getInstance().getPlayer(event.getUser());
 
@@ -90,9 +88,6 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                     event.setCancelled(true);
                     return event;
                 }
-
-
-
 
             // Loop though channels and append the correct ones.
             for (String key : channelSection.getKeys()) {
@@ -175,7 +170,7 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         for (Player p : allPlayers){
             if (p.hasPermission("chat.notify")){
                 User u = new User(p);
-                u.sendMessage("&c Player " + player.getUsername() + " Sent Message with Banned words\n" + message );
+                u.sendMessage("&cPlayer " + player.getUsername() + " Sent Message with Banned words\n" + message );
             }
         }
     }
