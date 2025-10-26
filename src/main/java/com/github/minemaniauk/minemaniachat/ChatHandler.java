@@ -96,9 +96,23 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 event.addWhitelistedServer(serverList);
             }
 
-        MineManiaChat.getInstance().getPerspectiveLogger().log(event.getUser().getName() ,event.getMessage());
+        var plugin = MineManiaChat.getInstance();
+        var logger = plugin.getPerspectiveLogger();
 
-            return event;
+        if (logger != null) {
+            plugin.getProxyServer().getScheduler()
+                    .buildTask(plugin, () -> {
+                        try {
+                            logger.log(event.getUser().getName(), event.getMessage());
+                        } catch (Exception ex) {
+                            plugin.getLogger().warn("Perspective log failed: {}", ex.getMessage());
+                        }
+                    })
+                    .schedule();
+        }
+
+        return event;
+
     }
 
     /**
