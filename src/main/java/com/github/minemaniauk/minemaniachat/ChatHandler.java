@@ -89,6 +89,8 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                     return event;
                 }
 
+
+
             // Loop though channels and append the correct ones.
             for (String key : channelSection.getKeys()) {
                 List<String> serverList = channelSection.getListString(key);
@@ -97,13 +99,13 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
             }
 
         var plugin = MineManiaChat.getInstance();
-        var logger = plugin.getPerspectiveLogger();
+        var logger = plugin.getToxicityLogger();
 
         if (logger != null) {
             plugin.getProxyServer().getScheduler()
                     .buildTask(plugin, () -> {
                         try {
-                            logger.log(event.getUser().getName(), event.getMessage());
+                            logger.log(event.getMessage(), event.getUser().getName());
                         } catch (Exception ex) {
                             plugin.getLogger().warn("Perspective log failed: {}", ex.getMessage());
                         }
@@ -112,7 +114,6 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         }
 
         return event;
-
     }
 
     /**

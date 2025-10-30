@@ -26,7 +26,7 @@
 
     <groupId>com.github.minemaniauk</groupId>
     <artifactId>MineManiaChat</artifactId>
-    <version>2.0.2-Perspective-Testing</version>
+    <version>2.1 Toxicity-Detecting-Testing-Async</version>
     <packaging>jar</packaging>
 
     <name>MineManiaChat</name>
@@ -87,9 +87,16 @@
             <artifactId>discord-webhook</artifactId>
             <version>1.0.0</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.Computerwhz</groupId>
             <artifactId>Perspectiveapi-Java</artifactId>
+            <version>v1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.Computerwhz</groupId>
+            <artifactId>Toxicity-Detector-Java</artifactId>
             <version>v1.0.0</version>
         </dependency>
     </dependencies>

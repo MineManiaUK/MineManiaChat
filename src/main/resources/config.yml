@@ -21,9 +21,8 @@ database:
   database_name: ""
 
 
-perspective-testing:
+Toxicity-Detecting-Test:
   enabled: false
-  api-key:
   discord-webhook:
 
 # Clear Chat Lines
