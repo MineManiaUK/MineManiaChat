@@ -78,6 +78,8 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
             // Get the instance of the player.
             Player player = optionalPlayer.get();
 
+            MineManiaChat.getInstance().getToxicityLogger().log(event.getMessage(), event.getUser().getName());
+
             // Format the message.
             this.appendChatFormatting(event, player);
 
@@ -97,21 +99,6 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 if (!serverList.contains(event.getSource().getName())) continue;
                 event.addWhitelistedServer(serverList);
             }
-
-        var plugin = MineManiaChat.getInstance();
-        var logger = plugin.getToxicityLogger();
-
-        if (logger != null) {
-            plugin.getProxyServer().getScheduler()
-                    .buildTask(plugin, () -> {
-                        try {
-                            logger.log(event.getMessage(), event.getUser().getName());
-                        } catch (Exception ex) {
-                            plugin.getLogger().warn("Perspective log failed: {}", ex.getMessage());
-                        }
-                    })
-                    .schedule();
-        }
 
         return event;
     }
