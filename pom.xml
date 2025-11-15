@@ -67,6 +67,13 @@
             <version>2.0.0</version>
         </dependency>
 
+        <!-- DJL tokenizer (Hugging Face compatible) -->
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>0.34.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
