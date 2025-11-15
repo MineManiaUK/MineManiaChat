@@ -3,8 +3,6 @@ package com.github.minemaniauk.minemaniachat;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import de.myzelyam.api.vanish.VanishAPI;
-import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.title.Title;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

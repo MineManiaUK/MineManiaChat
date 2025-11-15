@@ -20,6 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.computerwhz.ToxicityDetector;
 import com.github.kerbity.kerb.client.listener.EventListener;
 import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
@@ -69,8 +70,6 @@ public class MineManiaChat implements MineManiaAPIContract {
         this.server = server;
         this.logger = componentLogger;
 
-
-
         // Set up the configuration file.
         this.configuration = ConfigurationFactory.YAML
                 .create(folder.toFile(), "config")
@@ -92,12 +91,12 @@ public class MineManiaChat implements MineManiaAPIContract {
 
             if (enabled) {
                 String webhook = getConfig().getString("Toxicity-Detecting-Test.discord-webhook");
+                this.toxicityDetectorLogger = new ToxicityDetectorLogger(webhook, new ToxicityDetector());
+                getLogger().info("Successfully enabled Toxicity Testing");
             }
         } catch (Exception e) {
-            logger.error("[MineManiaChat] Failed to initialize Perspective testing. Continuing without it.", e);
+            logger.error("Failed to initialize Toxicity testing. Continuing without it.", e);
         }
-
-
 
         this.api.getKerbClient().registerListener(Priority.LOW, new EventListener<GetOnlinePlayersRequest>() {
             @Override
@@ -111,7 +110,6 @@ public class MineManiaChat implements MineManiaAPIContract {
 
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
-
     }
 
     @Override

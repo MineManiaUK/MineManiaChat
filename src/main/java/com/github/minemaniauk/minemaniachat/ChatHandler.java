@@ -20,10 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.eduardomcb.discord.webhook.WebhookClient;
-import com.eduardomcb.discord.webhook.WebhookManager;
-import com.eduardomcb.discord.webhook.models.Embed;
-import com.eduardomcb.discord.webhook.models.Field;
+
 import com.github.kerbity.kerb.client.listener.EventListener;
 import com.github.kerbity.kerb.packet.event.Event;
 import com.github.minemaniauk.api.format.ChatFormatPriority;
@@ -35,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.sql.Time;
-import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
@@ -98,20 +93,8 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 event.addWhitelistedServer(serverList);
             }
 
-        var plugin = MineManiaChat.getInstance();
-        var logger = plugin.getToxicityLogger();
 
-        if (logger != null) {
-            plugin.getProxyServer().getScheduler()
-                    .buildTask(plugin, () -> {
-                        try {
-                            logger.log(event.getMessage(), event.getUser().getName());
-                        } catch (Exception ex) {
-                            plugin.getLogger().warn("Perspective log failed: {}", ex.getMessage());
-                        }
-                    })
-                    .schedule();
-        }
+        MineManiaChat.getInstance().getToxicityLogger().log(event.getMessage(), event.getUser().getName());
 
         return event;
     }

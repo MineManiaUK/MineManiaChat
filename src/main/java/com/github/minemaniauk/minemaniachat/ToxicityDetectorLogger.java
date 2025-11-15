@@ -22,63 +22,88 @@ package com.github.minemaniauk.minemaniachat;
 
 import com.computerwhz.ToxicityDetector;
 import com.computerwhz.ToxicityScore;
-import com.eduardomcb.discord.webhook.WebhookClient;
-import com.eduardomcb.discord.webhook.WebhookManager;
-import com.eduardomcb.discord.webhook.models.Embed;
-import com.eduardomcb.discord.webhook.models.Field;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+
+import okhttp3.*;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class ToxicityDetectorLogger {
 
-    private final DecimalFormat DF = new DecimalFormat("0.000");
-    private final String discordUrl;
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+    private static final OkHttpClient HTTP = new OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .writeTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .callTimeout(10, TimeUnit.SECONDS)
+            .build();
+
+    private static final DecimalFormat DF = new DecimalFormat("0.000");
+
+    private final String webhookUrl;
+
     private final ToxicityDetector detector;
 
-    public ToxicityDetectorLogger(String discordUrl) throws Exception {
-        this.discordUrl = discordUrl;
-        this.detector = new ToxicityDetector();
+    public ToxicityDetectorLogger(String webhookUrl, ToxicityDetector detector) {
+        this.webhookUrl = webhookUrl;
+        this.detector = detector;
     }
 
-    public void log(String message, String userName) {
-
-        ToxicityScore result;
+    public void log(String message, String playerName) {
         try {
-            result = detector.analyze(message);
+            // Analyze
+            ToxicityScore result = detector.analyze(message);
+
+            // Format all scores as a simple bullet list (UPPERCASE)
+            String scoresRaw = formatScores(result);                // lines with \n
+            String scoreText = escapeJson(truncate(scoresRaw, 1000)); // Discord field.limit ≈ 1024
+
+            // Escape + truncate message + name for JSON
+            String safeMsg  = escapeJson(truncate(message, 1800));  // keep embed small
+            String safeName = escapeJson(truncate(playerName, 128));
+
+            // Color by toxicity (Discord embed color is decimal RGB)
+            int color = pickColor(result);
+
+            String payload =
+                    "{"
+                            + "\"embeds\":[{"
+                            +   "\"title\":\"Toxicity Analysis\","
+                            +   "\"description\":\"**Player:** " + safeName + "\\n\\n" + safeMsg + "\","
+                            +   "\"color\":" + color + ","
+                            +   "\"fields\":[{"
+                            +       "\"name\":\"Scores\","
+                            +       "\"value\":\"" + scoreText + "\","
+                            +       "\"inline\":false"
+                            +   "}]"
+                            + "}]"
+                            + "}";
+
+            Request req = new Request.Builder()
+                    .url(webhookUrl)
+                    .post(RequestBody.create(payload, JSON))
+                    .build();
+
+            try (Response res = HTTP.newCall(req).execute()) {
+                if (!res.isSuccessful()) {
+                    MineManiaChat.getInstance().getLogger()
+                            .warn("Discord webhook failed: HTTP {} {}",
+                                    res.code(),
+                                    res.body() != null ? res.body().string() : "");
+                }
+            }
+        } catch (IOException e) {
+            MineManiaChat.getInstance().getLogger()
+                    .warn("Could not send Discord log: {}", e.getMessage());
+        } catch (Exception e) {
+            MineManiaChat.getInstance().getLogger()
+                    .error("Could not get toxicity score", e);
         }
-        catch (Exception e) {
-            MineManiaChat.getInstance().getLogger().error("Could not get toxicity score");
-            MineManiaChat.getInstance().getLogger().error(e.getMessage());
-            MineManiaChat.getInstance().getLogger().error(e.getStackTrace().toString());
-            return;
-        }
-
-        WebhookManager webhook = new WebhookManager()
-                .setChannelUrl(this.discordUrl)
-                .setListener(new WebhookClient.Callback() {
-                    @Override
-                    public void onSuccess(String r) { }
-
-                    @Override
-                    public void onFailure(int code, String e) {
-                        MineManiaChat.getInstance().getLogger().error("Failed to send discord log {} {}", code, e);
-                    }
-                });
-
-        List<Field> fields = List.of(new Field("Scores", formatScores(result), false));
-        Embed embed = new Embed()
-                .setTitle("Toxicity analysis")
-                .setDescription("Player: " + userName + "\n" + message)
-                .setFields(fields.toArray(new Field[0]));
-
-        webhook.setEmbeds(new Embed[]{ embed });
-        webhook.exec();
     }
 
-    public String formatScores(ToxicityScore result) {
+    private static String formatScores(ToxicityScore result) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Double> e : result.getScores().entrySet()) {
             double v = (e.getValue() == null) ? Double.NaN : e.getValue();
@@ -91,4 +116,38 @@ public class ToxicityDetectorLogger {
         return sb.toString().trim();
     }
 
+    private static String escapeJson(String s) {
+        if (s == null) return "";
+        StringBuilder out = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\"' -> out.append("\\\"");
+                case '\\' -> out.append("\\\\");
+                case '\b' -> out.append("\\b");
+                case '\f' -> out.append("\\f");
+                case '\n' -> out.append("\\n");
+                case '\r' -> out.append("\\r");
+                case '\t' -> out.append("\\t");
+                default -> {
+                    if (c < 0x20) out.append(String.format("\\u%04x", (int) c));
+                    else out.append(c);
+                }
+            }
+        }
+        return out.toString();
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return "";
+        return s.length() <= max ? s : s.substring(0, max - 1) + "…";
+    }
+
+    private static int pickColor(ToxicityScore r) {
+        double tox = r.toxicity().orElse(0.0);
+        if (tox >= 0.80) return 0xE53935; // red
+        if (tox >= 0.50) return 0xFB8C00; // orange
+        return 0x43A047;                  // green
+    }
 }
+
