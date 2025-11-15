@@ -7,7 +7,7 @@
 
     <groupId>com.github.minemaniauk</groupId>
     <artifactId>MineManiaChat</artifactId>
-    <version>2.2 Toxicity-Detecting-(ONNX)-Testing-Not-Async</version>
+    <version>2.2 Toxicity-Detecting-(ONNX)-Testing-Async</version>
     <packaging>jar</packaging>
 
     <name>MineManiaChat</name>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>com.github.Computerwhz</groupId>
             <artifactId>Toxicity-Detector-Java</artifactId>
-            <version>1.0.0</version>
+            <version>2.0.0</version>
         </dependency>
 
     </dependencies>

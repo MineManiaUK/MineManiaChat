@@ -94,7 +94,20 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
             }
 
 
-        MineManiaChat.getInstance().getToxicityLogger().log(event.getMessage(), event.getUser().getName());
+        var plugin = MineManiaChat.getInstance();
+        var logger = plugin.getToxicityLogger();
+
+        if (logger != null) {
+            plugin.getProxyServer().getScheduler()
+                    .buildTask(plugin, () -> {
+                        try {
+                            logger.log(event.getMessage(), event.getUser().getName());
+                        } catch (Exception ex) {
+                            plugin.getLogger().warn("Perspective log failed: {}", ex.getMessage());
+                        }
+                    })
+                    .schedule();
+        }
 
         return event;
     }
