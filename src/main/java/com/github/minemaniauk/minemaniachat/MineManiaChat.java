@@ -60,6 +60,7 @@ public class MineManiaChat implements MineManiaAPIContract {
     private final @NotNull ProxyServer server;
     private final @NotNull ComponentLogger logger;
     private final @NotNull Configuration configuration;
+    private final @NotNull Path dataFolder;
     private final @NotNull MineManiaAPI api;
     private final @NotNull ChatHandler chatHandler;
     private ToxicityDetectorLogger toxicityDetectorLogger;
@@ -67,6 +68,7 @@ public class MineManiaChat implements MineManiaAPIContract {
     @Inject
     public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
         MineManiaChat.instance = this;
+        this.dataFolder = folder;
         this.server = server;
         this.logger = componentLogger;
 
@@ -91,7 +93,12 @@ public class MineManiaChat implements MineManiaAPIContract {
 
             if (enabled) {
                 String webhook = getConfig().getString("Toxicity-Detecting-Test.discord-webhook");
-                this.toxicityDetectorLogger = new ToxicityDetectorLogger(webhook, new ToxicityDetector());
+                ToxicityDetector td = new ToxicityDetector(
+                        getDataFolder().resolve("onnx/config.json"),
+                        getDataFolder().resolve("onnx/model_quantized.onnx"),
+                        getDataFolder().resolve("onnx/tokenizer.json")
+                );
+                this.toxicityDetectorLogger = new ToxicityDetectorLogger(webhook, td);
                 getLogger().info("Successfully enabled Toxicity Testing");
             }
         } catch (Exception e) {
@@ -337,6 +344,10 @@ public class MineManiaChat implements MineManiaAPIContract {
      */
 
     public Configuration getConfig() { return this.configuration; }
+
+    public Path getDataFolder(){
+        return this.dataFolder;
+    }
 
     /**
      * Used to get the instance of the
