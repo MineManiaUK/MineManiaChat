@@ -21,19 +21,14 @@
 package com.github.minemaniauk.minemaniachat;
 
 import com.github.kerbity.kerb.client.listener.EventListener;
-import com.github.kerbity.kerb.packet.event.Event;
 import com.github.kerbity.kerb.packet.event.Priority;
 import com.github.minemaniauk.api.MineManiaAPI;
 import com.github.minemaniauk.api.MineManiaAPIContract;
-import com.github.minemaniauk.api.database.collection.GameRoomCollection;
-import com.github.minemaniauk.api.database.record.GameRoomRecord;
-import com.github.minemaniauk.api.game.Arena;
 import com.github.minemaniauk.api.kerb.event.GetOnlinePlayersRequest;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
-import com.github.smuddgge.squishyconfiguration.implementation.YamlConfiguration;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
@@ -45,8 +40,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import de.myzelyam.api.vanish.VelocityVanishAPI;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +50,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "2.0.0 Preview"
+        version = "2.1.0"
 )
 public class MineManiaChat implements MineManiaAPIContract {
 

@@ -20,10 +20,6 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.eduardomcb.discord.webhook.WebhookClient;
-import com.eduardomcb.discord.webhook.WebhookManager;
-import com.eduardomcb.discord.webhook.models.Embed;
-import com.eduardomcb.discord.webhook.models.Field;
 import com.github.kerbity.kerb.client.listener.EventListener;
 import com.github.kerbity.kerb.packet.event.Event;
 import com.github.minemaniauk.api.format.ChatFormatPriority;
@@ -35,10 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.sql.Time;
-import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Used to handle chat events.
@@ -48,6 +43,9 @@ import java.util.List;
 public class ChatHandler implements EventListener<PlayerPostChatEvent> {
 
     private final @NotNull Configuration configuration;
+    private final Pattern URL_PATTERN = Pattern.compile(
+            "(https?://[^\\s]+)|(www\\.[^\\s]+)|([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
+    );
 
     /**
      * Used to create a new instance of the chat handler.
@@ -81,14 +79,25 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
             // Format the message.
             this.appendChatFormatting(event, player);
 
-            // Check for banned words.
-                if (this.containsBannedWords(event.getMessage())) {
-                    new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
-                    notifyStaff(player, event.getMessage());
+            // Check for URLs
+            if (!player.hasPermission("chat.bypass.filter.url")) {
+                if (URL_PATTERN.matcher(event.getMessage()).find()) {
+                    new User(player).sendMessage("&c&l> &7Please do not use &cURLs &7in your message.");
+                    notifyStaff(player, "Sent Message with a URL!", event.getMessage());
                     event.setCancelled(true);
                     return event;
                 }
+            }
 
+            // Check for banned words.
+            if (!player.hasPermission("chat.bypass.filter.banned-words")) {
+                if (this.containsBannedWords(event.getMessage())) {
+                    new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
+                    notifyStaff(player, "Sent Message with Banned words!", event.getMessage());
+                    event.setCancelled(true);
+                    return event;
+                }
+            }
             // Loop though channels and append the correct ones.
             for (String key : channelSection.getKeys()) {
                 List<String> serverList = channelSection.getListString(key);
@@ -164,13 +173,13 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         return false;
     }
 
-    public void notifyStaff(Player player ,String message){
+    public void notifyStaff(Player player, String staffMessage ,String message){
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
         for (Player p : allPlayers){
             if (p.hasPermission("chat.notify")){
                 User u = new User(p);
-                u.sendMessage("&cPlayer " + player.getUsername() + " Sent Message with Banned words\n" + message );
+                u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message );
             }
         }
     }

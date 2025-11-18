@@ -18,7 +18,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat;import com.velocitypowered.api.command.SimpleCommand;
+package com.github.minemaniauk.minemaniachat;
+
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
 public class JmSendCommand implements SimpleCommand {
