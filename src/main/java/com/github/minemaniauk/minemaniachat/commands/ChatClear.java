@@ -18,8 +18,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat;
+package com.github.minemaniauk.minemaniachat.commands;
 
+import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.User;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;

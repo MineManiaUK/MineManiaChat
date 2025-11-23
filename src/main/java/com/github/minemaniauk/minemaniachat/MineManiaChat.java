@@ -28,6 +28,14 @@ import com.github.minemaniauk.api.kerb.event.GetOnlinePlayersRequest;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
+import com.github.minemaniauk.minemaniachat.commands.ChatClear;
+import com.github.minemaniauk.minemaniachat.commands.JmSendCommand;
+import com.github.minemaniauk.minemaniachat.message.DataManager;
+import com.github.minemaniauk.minemaniachat.message.MessageHandler;
+import com.github.minemaniauk.minemaniachat.message.commands.Message;
+import com.github.minemaniauk.minemaniachat.message.commands.PmDisable;
+import com.github.minemaniauk.minemaniachat.message.commands.PmEnable;
+import com.github.minemaniauk.minemaniachat.message.commands.Spy;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
@@ -61,14 +69,18 @@ public class MineManiaChat implements MineManiaAPIContract {
     private final @NotNull Configuration configuration;
     private final @NotNull MineManiaAPI api;
     private final @NotNull ChatHandler chatHandler;
+    private final @NotNull MessageHandler messageHandler;
+    private final @NotNull DataManager dataManager;
+    private final @NotNull Path playerDataPath;
+    private final @NotNull Path dataPath;
 
     @Inject
     public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
         MineManiaChat.instance = this;
         this.server = server;
         this.logger = componentLogger;
-
-
+        this.dataPath = folder.resolve("data");
+        this.playerDataPath = folder.resolve("player-data");
 
         // Set up the configuration file.
         this.configuration = ConfigurationFactory.YAML
@@ -84,6 +96,8 @@ public class MineManiaChat implements MineManiaAPIContract {
 
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration);
+        this.messageHandler = new MessageHandler();
+        this.dataManager = new DataManager(this.dataPath, this.playerDataPath);
         this.api.getKerbClient().registerListener(Priority.HIGH, this.chatHandler);
 
         this.api.getKerbClient().registerListener(Priority.LOW, new EventListener<GetOnlinePlayersRequest>() {
@@ -98,7 +112,10 @@ public class MineManiaChat implements MineManiaAPIContract {
 
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
-
+        cm.register(cm.metaBuilder("message").aliases("msg").build(), new Message());
+        cm.register(cm.metaBuilder("enablepm").aliases("unmutepm").build(), new PmEnable());
+        cm.register(cm.metaBuilder("disablepm").aliases("mutepm").build(), new PmDisable());
+        cm.register(cm.metaBuilder("togglespy").aliases("spy").build(), new Spy());
     }
 
     @Override
@@ -296,6 +313,27 @@ public class MineManiaChat implements MineManiaAPIContract {
         }
         return null;
     }
+
+    /**
+     * Used to get the instance of the Data Manager
+     *
+     * @return The instance of the Data Manager
+     */
+    public @NotNull DataManager getDataManager() { return this.dataManager; }
+
+    /**
+     * Used to get the instance of the message handler
+     *
+     * @return The instance of the message handler
+     */
+    public @NotNull MessageHandler getMessageHandler() { return this.messageHandler; }
+
+    /**
+     * Used to get the instance of the chat handler
+     *
+     * @return The instance of the chat handler
+     */
+    public @NotNull ChatHandler getChatHandler() { return this.chatHandler; }
 
     /**
      * Used to get the instance of the proxy server.

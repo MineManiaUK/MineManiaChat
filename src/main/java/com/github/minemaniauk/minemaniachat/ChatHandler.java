@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 public class ChatHandler implements EventListener<PlayerPostChatEvent> {
 
     private final @NotNull Configuration configuration;
-    private final Pattern URL_PATTERN = Pattern.compile(
+    public final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)|(www\\.[^\\s]+)|([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
     );
 
@@ -179,7 +179,7 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
         for (Player p : allPlayers){
             if (p.hasPermission("chat.notify")){
                 User u = new User(p);
-                u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message );
+                u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message);
             }
         }
     }

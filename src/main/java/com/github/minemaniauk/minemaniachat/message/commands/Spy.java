@@ -18,26 +18,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat;
+package com.github.minemaniauk.minemaniachat.message.commands;
 
+import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.User;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
-public class JmSendCommand implements SimpleCommand {
+
+public class Spy implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
-        Player player = (Player) invocation.source();
-
-        for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()){
-            new User(p).sendMessage("&a+ &7" + player.getUsername());
+        if (invocation.source() instanceof Player player){
+            if (!MineManiaChat.getInstance().getDataManager().isSpying(player)){
+                MineManiaChat.getInstance().getDataManager().enableSpy(player);
+                new User(player).sendMessage("&7&l> &7Toggled spy &aon");
+            }
+            else {
+                MineManiaChat.getInstance().getDataManager().disableSpy(player);
+                new User(player).sendMessage("&7&l> &7Toggled spy &coff");
+            }
+        }
+        else {
+            invocation.source().sendPlainMessage("Must be player");
         }
     }
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        if (invocation.source() instanceof Player){
-           return invocation.source().hasPermission("chat.joinmessage.fakesend");
-        }
-        return false;
+        return invocation.source().hasPermission("chat.private-message.spy");
     }
 }
