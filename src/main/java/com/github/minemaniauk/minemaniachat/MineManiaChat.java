@@ -32,10 +32,7 @@ import com.github.minemaniauk.minemaniachat.commands.ChatClear;
 import com.github.minemaniauk.minemaniachat.commands.JmSendCommand;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
-import com.github.minemaniauk.minemaniachat.message.commands.Message;
-import com.github.minemaniauk.minemaniachat.message.commands.PmDisable;
-import com.github.minemaniauk.minemaniachat.message.commands.PmEnable;
-import com.github.minemaniauk.minemaniachat.message.commands.Spy;
+import com.github.minemaniauk.minemaniachat.message.commands.*;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
@@ -116,6 +113,8 @@ public class MineManiaChat implements MineManiaAPIContract {
         cm.register(cm.metaBuilder("enablepm").aliases("unmutepm").build(), new PmEnable());
         cm.register(cm.metaBuilder("disablepm").aliases("mutepm").build(), new PmDisable());
         cm.register(cm.metaBuilder("togglespy").aliases("spy").build(), new Spy());
+        cm.register(cm.metaBuilder("servermessage").aliases("servermsg", "smsg").build(), new ServerMessage());
+        cm.register(cm.metaBuilder("broadcast").build(), new Broadcast());
     }
 
     @Override

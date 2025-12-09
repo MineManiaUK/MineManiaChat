@@ -50,6 +50,7 @@ public class Message implements SimpleCommand {
         Optional<Player> recipient = MineManiaChat.getInstance().getProxyServer().getPlayer(targetName);
 
         if (!recipient.isPresent()) {
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cAn error occurred"));
             MineManiaChat.getInstance().getLogger().warn("Could not get recipient");
             return;
         }
@@ -60,9 +61,13 @@ public class Message implements SimpleCommand {
                 return;
             }
 
-            MineManiaChat.getInstance().getMessageHandler().sendMessage(player, recipient.get(), message);
+            MineManiaChat.getInstance().getMessageHandler().sendPlayerMessage(player, recipient.get(), message);
+        }
+        else if (invocation.source() instanceof ConsoleCommandSource) {
+            MineManiaChat.getInstance().getMessageHandler().sendConsoleMessage(recipient.get(), message);
         }
         else {
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cAn error occurred"));
             MineManiaChat.getInstance().getLogger().warn("Could not get message source cancelling");
         }
     }

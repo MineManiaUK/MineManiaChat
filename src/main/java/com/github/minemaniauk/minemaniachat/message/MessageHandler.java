@@ -28,7 +28,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class MessageHandler {
 
-    public void sendMessage(Player from, Player to, String message){
+    public void sendPlayerMessage(Player from, Player to, String message){
 
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
             if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
@@ -58,7 +58,7 @@ public class MessageHandler {
 
         for (Player player : MineManiaChat.getInstance().getProxyServer().getAllPlayers()){
             if (player.hasPermission("chat.private-message.spy") && MineManiaChat.getInstance().getDataManager().isSpying(player)){
-                new User(player).sendMessage("&8" + from.getUsername() + " -> " + to.getUsername() + " : &o" + message);
+                new User(player).sendMessage("&8&o" + from.getUsername() + " -> " + to.getUsername() + " : &o" + message);
             }
         }
 
@@ -71,6 +71,25 @@ public class MessageHandler {
         to.sendMessage(
                 LegacyComponentSerializer.legacyAmpersand().deserialize(
                         "&f✉ &f&o" + from.getUsername() + " &7-> &7&ome &7&o: " + message
+                )
+        );
+    }
+
+    public void sendConsoleMessage(Player to, String message) {
+
+        for (Player player : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+            if (player.hasPermission("chat.private-message.spy") && MineManiaChat.getInstance().getDataManager().isSpying(player)) {
+                new User(player).sendMessage("&8" + "CONSOLE" + " -> " + to.getUsername() + " : &o" + message);
+            }
+        }
+
+        MineManiaChat.getInstance().getLogger().info(LegacyComponentSerializer.legacyAmpersand().deserialize(
+                "&f✉ &7&ome -> &f&o" + to.getUsername() + "&7&o: " + message
+        ));
+
+        to.sendMessage(
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                        "&f✉ &f&o" + "CONSOLE" + " &7-> &7&ome &7&o: " + message
                 )
         );
     }
