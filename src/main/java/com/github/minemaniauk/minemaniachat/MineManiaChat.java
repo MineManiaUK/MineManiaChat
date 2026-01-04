@@ -28,8 +28,10 @@ import com.github.minemaniauk.api.kerb.event.GetOnlinePlayersRequest;
 import com.github.minemaniauk.api.kerb.event.player.PlayerChatEvent;
 import com.github.minemaniauk.api.kerb.event.useraction.*;
 import com.github.minemaniauk.api.user.MineManiaUser;
+import com.github.minemaniauk.minemaniachat.commands.Broadcast;
 import com.github.minemaniauk.minemaniachat.commands.ChatClear;
 import com.github.minemaniauk.minemaniachat.commands.JmSendCommand;
+import com.github.minemaniauk.minemaniachat.commands.ServerMessage;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
@@ -55,7 +57,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "2.1.0"
+        version = "2.2.2"
 )
 public class MineManiaChat implements MineManiaAPIContract {
 

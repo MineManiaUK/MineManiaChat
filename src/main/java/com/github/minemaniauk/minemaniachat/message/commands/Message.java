@@ -20,13 +20,10 @@
 
 package com.github.minemaniauk.minemaniachat.message.commands;
 
-import com.github.minemaniauk.api.user.MineManiaUser;
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
-import com.github.minemaniauk.minemaniachat.User;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
@@ -50,8 +47,7 @@ public class Message implements SimpleCommand {
         Optional<Player> recipient = MineManiaChat.getInstance().getProxyServer().getPlayer(targetName);
 
         if (!recipient.isPresent()) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cAn error occurred"));
-            MineManiaChat.getInstance().getLogger().warn("Could not get recipient");
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cCould not get recipient"));
             return;
         }
 

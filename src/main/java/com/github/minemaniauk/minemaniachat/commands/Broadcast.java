@@ -18,14 +18,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat.message.commands;
+package com.github.minemaniauk.minemaniachat.commands;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-
-import java.util.Optional;
 
 public class Broadcast implements SimpleCommand {
     @Override
