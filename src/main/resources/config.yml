@@ -7,19 +7,6 @@
 #
 # Author: MineManiaUK Staff
 
-kerb:
-  client_name: ""
-  server_port: 5000
-  server_address: ""
-  server_certificate_path: ""
-  client_certificate_path: ""
-  password: ""
-  max_wait_time_millis: 400
-
-database:
-  connection_string: ""
-  database_name: ""
-
 
 # Clear Chat Lines
 clear-chat-lines: 100
@@ -31,14 +18,3 @@ format:
   default:
     prefix: ""
     postfix: ""
-
-# Indicates groups of servers
-# that chat will be synced across.
-channels:
-  main:
-    - hub
-    - smp
-
-banned_words:
-  - BannedWord1
-  - BannedWord2

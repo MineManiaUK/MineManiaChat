@@ -20,15 +20,14 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.github.kerbity.kerb.client.listener.EventListener;
-import com.github.kerbity.kerb.packet.event.Event;
-import com.github.minemaniauk.api.format.ChatFormatPriority;
-import com.github.minemaniauk.api.kerb.event.player.PlayerPostChatEvent;
+
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -40,9 +39,10 @@ import java.util.regex.Pattern;
  * When the post-chat event is called it will
  * handle the formatting and filtering.
  */
-public class ChatHandler implements EventListener<PlayerPostChatEvent> {
+public class ChatHandler {
 
     private final @NotNull Configuration configuration;
+    private final @NotNull Configuration bannedWords;
     public final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)|(www\\.[^\\s]+)|([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
     );
@@ -53,79 +53,69 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
      * @param configuration The instance of the configuration
      *                      to format and filter the chat.
      */
-    public ChatHandler(@NotNull Configuration configuration) {
+    public ChatHandler(@NotNull Configuration configuration, @NotNull Configuration bannedWords) {
         this.configuration = configuration;
+        this.bannedWords = bannedWords;
     }
 
-    @Override
-    public @Nullable Event onEvent(@NotNull PlayerPostChatEvent event) {
-            ConfigurationSection channelSection = this.configuration.getSection("channels");
-            Optional<Player> optionalPlayer = MineManiaChat.getInstance().getPlayer(event.getUser());
+    @Subscribe
+    public void onEvent(@NotNull PlayerChatEvent event) {
+            Player sendingPlayer = event.getPlayer();
 
-            // Check if the player is online.
-            if (optionalPlayer.isEmpty()) {
-                MineManiaChat.getInstance().getLogger().warn("[ChatEvent] Attempted to get player from user but the player was not online.");
-                event.setCancelled(true);
-                return event;
-            }
+            event.setResult(PlayerChatEvent.ChatResult.denied());
 
             if (event.getMessage().startsWith("[event cancelled]")){
-                event.setCancelled(true);
+                return;
             }
 
-            // Get the instance of the player.
-            Player player = optionalPlayer.get();
-
-            // Format the message.
-            this.appendChatFormatting(event, player);
-
             // Check for URLs
-            if (!player.hasPermission("chat.bypass.filter.url")) {
+            if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
                 if (URL_PATTERN.matcher(event.getMessage()).find()) {
-                    new User(player).sendMessage("&c&l> &7Please do not use &cURLs &7in your message.");
-                    notifyStaff(player, "Sent Message with a URL!", event.getMessage());
-                    event.setCancelled(true);
-                    return event;
+                    new User(sendingPlayer).sendMessage("&c&l> &7Please do not use &cURLs &7in your message.");
+                    notifyStaff(sendingPlayer, "Sent Message with a URL!", event.getMessage());
+                    return;
                 }
             }
 
             // Check for banned words.
-            if (!player.hasPermission("chat.bypass.filter.banned-words")) {
+            if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
                 if (this.containsBannedWords(event.getMessage())) {
-                    new User(player).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
-                    notifyStaff(player, "Sent Message with Banned words!", event.getMessage());
-                    event.setCancelled(true);
-                    return event;
+                    new User(sendingPlayer).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
+                    notifyStaff(sendingPlayer, "Sent Message with Banned words!", event.getMessage());
+                    return;
                 }
             }
-            // Loop though channels and append the correct ones.
-            for (String key : channelSection.getKeys()) {
-                List<String> serverList = channelSection.getListString(key);
-                if (!serverList.contains(event.getSource().getName())) continue;
-                event.addWhitelistedServer(serverList);
-            }
 
-            return event;
+            for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+                p.sendMessage(
+                        LegacyComponentSerializer.legacyAmpersand().deserialize(
+                                this.formatMessage(event.getMessage(), sendingPlayer)
+                        )
+                );
+            }
     }
 
     /**
      * Used to append chat formatting to the message.
      *
-     * @param event  The instance of the chat event.
+     * @param message The instance of the chat event.
      * @param player The instance of the player.
      */
-    public void appendChatFormatting(@NotNull PlayerPostChatEvent event, @NotNull Player player) {
+    public String formatMessage(@NotNull String message, @NotNull Player player) {
         ConfigurationSection formatSection = this.configuration.getSection("format");
+
+        String prefix = "";
+        String postfix = "";
 
         // Loop though chat formatting.
         for (String key : formatSection.getKeys()) {
             String permission = "chat." + key;
             if (!player.hasPermission(permission)) continue;
-            event.getChatFormat()
-                    .addPrefix(formatSection.getSection(key).getString("prefix", ""), ChatFormatPriority.HIGH)
-                    .addPostfix(formatSection.getSection(key).getString("postfix", ""), ChatFormatPriority.HIGH);
+            prefix = formatSection.getSection(key).getString("prefix", "");
+            postfix = formatSection.getSection(key).getString("postfix", "");
             break;
         }
+        return prefix + " &f" + player.getUsername() + " &7: &f" + message + " &f" + postfix;
     }
 
     /**
@@ -140,7 +130,7 @@ public class ChatHandler implements EventListener<PlayerPostChatEvent> {
                 .toList()
         );
         System.out.println(message);
-        List<String> bannedPhrases = this.configuration.getListString("banned_words", new ArrayList<>());
+        List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
 
         // Loop though each word in the message.
         for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {

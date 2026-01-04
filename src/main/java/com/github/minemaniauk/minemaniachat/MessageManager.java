@@ -106,7 +106,7 @@ public class MessageManager {
                     player
             );
         } catch (Exception exception) {
-            Console.warn("Unable to convert message : " + message);
+            MineManiaChat.getInstance().getLogger().warn("Unable to convert message : " + message);
             exception.printStackTrace();
             return null;
         }
