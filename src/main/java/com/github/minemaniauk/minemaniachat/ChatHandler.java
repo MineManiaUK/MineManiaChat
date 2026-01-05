@@ -26,6 +26,7 @@ import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public class ChatHandler {
     }
 
     @Subscribe
-    public void onEvent(@NotNull PlayerChatEvent event) {
+    public void onEvent(PlayerChatEvent event) {
             Player sendingPlayer = event.getPlayer();
 
             event.setResult(PlayerChatEvent.ChatResult.denied());
@@ -86,13 +87,21 @@ public class ChatHandler {
                 }
             }
 
+            String formattedMessage = this.formatMessage(event.getMessage(), sendingPlayer);
+
             for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
                 p.sendMessage(
                         LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                this.formatMessage(event.getMessage(), sendingPlayer)
+                                formattedMessage
                         )
                 );
             }
+
+            MineManiaChat.getInstance().getLogger().info(
+                    LegacyComponentSerializer.legacyAmpersand().deserialize(
+                            formattedMessage
+                    )
+            );
     }
 
     /**
@@ -115,7 +124,15 @@ public class ChatHandler {
             postfix = formatSection.getSection(key).getString("postfix", "");
             break;
         }
-        return prefix + " &f" + player.getUsername() + " &7: &f" + message + " &f" + postfix;
+
+        if (!prefix.isBlank()) {
+            prefix = prefix + " ";
+        }
+        if (!postfix.isBlank()) {
+            postfix = " " + postfix;
+        }
+
+        return prefix + "&f" + player.getUsername() + " &7: &f" + message + "&f" + postfix;
     }
 
     /**
@@ -126,10 +143,9 @@ public class ChatHandler {
      */
     public boolean containsBannedWords(@NotNull String message) {
         message = String.join("", Arrays.stream(message.toLowerCase().split(""))
-                .filter(character -> character.matches("([a-z]|[A-Z]| )"))
+                .filter(character -> character.matches("[a-zA-Z0-9 ]"))
                 .toList()
         );
-        System.out.println(message);
         List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
 
         // Loop though each word in the message.

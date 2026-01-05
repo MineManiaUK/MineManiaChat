@@ -34,6 +34,7 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -82,8 +83,6 @@ public class MineManiaChat {
                 .setDefaultPath("bannedwords.yml");
         this.bannedWords.load();
 
-
-
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         this.messageHandler = new MessageHandler();
@@ -99,6 +98,11 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("togglespy").aliases("spy").build(), new Spy());
         cm.register(cm.metaBuilder("servermessage").aliases("servermsg", "smsg").build(), new ServerMessage());
         cm.register(cm.metaBuilder("broadcast").build(), new Broadcast());
+    }
+
+    @Subscribe
+    public void ProxyInitEvent(ProxyInitializeEvent event) {
+        this.server.getEventManager().register(this, this.chatHandler);
     }
 
     @Subscribe
@@ -148,6 +152,7 @@ public class MineManiaChat {
         this.configuration.load();
         this.bannedWords.load();
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.server.getEventManager().register(this, this.chatHandler);
     }
 
     /**
