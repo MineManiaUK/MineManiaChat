@@ -32,18 +32,7 @@ import java.util.Collection;
 public class ChatClear implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
-        if (invocation.source() instanceof Player){
-            User user = new User((Player) invocation.source());
-            if (user.hasPermission("chat.clear")){
-                ClearChat();
-            }
-            else {
-                user.sendMessage("&cYou Do Not Have Permission to run this command");
-            }
-
-        } else if (invocation.source() instanceof ConsoleCommandSource) {
-            ClearChat();
-        }
+        ClearChat();
     }
 
 
@@ -58,5 +47,10 @@ public class ChatClear implements SimpleCommand {
             }
             u.sendMessage("&7&l> §7Chat has been cleared.");
         }
+    }
+
+    @Override
+    public boolean hasPermission(Invocation invocation) {
+        return invocation.source().hasPermission("chat.clear");
     }
 }
