@@ -18,3 +18,15 @@ format:
   default:
     prefix: ""
     postfix: ""
+
+
+database:
+  litebans:
+    url: ""
+    user: ""
+    password: ""
+
+  premium-vanish:
+    url: ""
+    user: ""
+    password: ""

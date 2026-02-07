@@ -26,7 +26,6 @@ import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
-import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,13 +58,14 @@ public class ChatHandler {
         this.bannedWords = bannedWords;
     }
 
-    @Subscribe
-    public void onEvent(PlayerChatEvent event) {
+        @Subscribe
+        public void onEvent(PlayerChatEvent event) {
             Player sendingPlayer = event.getPlayer();
 
             event.setResult(PlayerChatEvent.ChatResult.denied());
 
-            if (event.getMessage().startsWith("[event cancelled]")){
+            // Check if muted via Database
+            if (MineManiaChat.getInstance().getDbController().isPlayerMuted(sendingPlayer)){
                 return;
             }
 
@@ -102,7 +102,7 @@ public class ChatHandler {
                             formattedMessage
                     )
             );
-    }
+        }
 
     /**
      * Used to append chat formatting to the message.

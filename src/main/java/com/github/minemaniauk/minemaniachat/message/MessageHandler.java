@@ -30,6 +30,10 @@ public class MessageHandler {
 
     public void sendPlayerMessage(Player from, Player to, String message){
 
+        if (MineManiaChat.getInstance().getDbController().isPlayerMuted(from)){
+            return;
+        }
+
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
             if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
                 new User(from).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");

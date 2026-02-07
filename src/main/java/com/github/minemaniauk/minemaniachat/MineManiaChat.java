@@ -35,6 +35,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -48,7 +49,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.0.0"
+        version = "3.1.0"
 )
 public class MineManiaChat {
 
@@ -59,6 +60,7 @@ public class MineManiaChat {
     private final @NotNull Configuration configuration;
     private final @NotNull Configuration bannedWords;
     private @NotNull ChatHandler chatHandler;
+    private @NotNull DataBaseController dbController;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
@@ -87,6 +89,7 @@ public class MineManiaChat {
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         this.messageHandler = new MessageHandler();
         this.dataManager = new DataManager(this.dataPath, this.playerDataPath);
+        this.dbController = new DataBaseController(getConfig());
 
         CommandManager cm = getProxyServer().getCommandManager();
 
@@ -103,6 +106,11 @@ public class MineManiaChat {
     @Subscribe
     public void ProxyInitEvent(ProxyInitializeEvent event) {
         this.server.getEventManager().register(this, this.chatHandler);
+    }
+
+    @Subscribe
+    public void OnShutdown(ProxyShutdownEvent event){
+        dbController.close();
     }
 
     @Subscribe
@@ -184,6 +192,13 @@ public class MineManiaChat {
     public @NotNull ProxyServer getProxyServer() {
         return this.server;
     }
+
+    /**
+     * Used to get the instance of the DataBase Controller
+     *
+     * @return The instance of the DataBase Controller
+     */
+    public @NotNull DataBaseController getDbController() { return this.dbController; }
 
     /**
      * Used to get the instance of the logger.

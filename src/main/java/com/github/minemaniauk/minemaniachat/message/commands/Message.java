@@ -79,7 +79,14 @@ public class Message implements SimpleCommand {
 
         List<String> completions = new ArrayList<>();
         for (Player player : players) {
-            completions.add(player.getUsername());
+            if (!invocation.source().hasPermission("pv.see")) {
+                if (!MineManiaChat.getInstance().getDbController().isPlayerVanished(player)){
+                    completions.add(player.getUsername());
+                }
+            }
+            else {
+                completions.add(player.getUsername());
+            }
         }
 
         String[] args = invocation.arguments();
