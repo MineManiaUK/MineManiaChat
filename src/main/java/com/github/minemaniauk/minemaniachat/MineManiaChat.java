@@ -49,7 +49,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.1.0"
+        version = "3.1.1"
 )
 public class MineManiaChat {
 

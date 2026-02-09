@@ -29,10 +29,12 @@ import java.util.UUID;
 
 public class DataBaseController {
 
+    private Configuration config;
     private Connection lbConn;
     private Connection pvConn;
 
     public DataBaseController(Configuration config) {
+        this.config = config;
 
         try {
             Class.forName("org.mariadb.jdbc.Driver");
@@ -41,26 +43,46 @@ public class DataBaseController {
             MineManiaChat.getInstance().getLogger().error("MariaDB driver NOT found", e);
         }
 
-        try {
-            ConfigurationSection lbSection = config.getSection("database.litebans");
-            ConfigurationSection pvSection = config.getSection("database.premium-vanish");
+    }
 
-            String lbUrl = lbSection.getString("url");
-            String lbUser = lbSection.getString("user");;
-            String lbPassword = lbSection.getString("password");;
+    private Connection getLbConn() throws SQLException {
+        if (lbConn == null || lbConn.isClosed() || !lbConn.isValid(2)) {
+            try {
+                ConfigurationSection lbSection = config.getSection("database.litebans");
 
-            String pvUrl = pvSection.getString("url");
-            String pvUser = pvSection.getString("user");;
-            String pvPassword = pvSection.getString("password");;
+                String url = lbSection.getString("url");
+                String user = lbSection.getString("user");;
+                String password = lbSection.getString("password");;
 
-            lbConn = DriverManager.getConnection(lbUrl, lbUser, lbPassword);
-            pvConn = DriverManager.getConnection(pvUrl, pvUser, pvPassword);
+                lbConn = DriverManager.getConnection(url, user, password);
+            }
+            catch(SQLException e) {
+                MineManiaChat.getInstance().getLogger().atError().setCause(e)
+                        .log("Could not connect to db");
+            }
         }
-        catch(SQLException e) {
-            MineManiaChat.getInstance().getLogger().atError().setCause(e)
-                    .log("Could not connect to db");
+
+        return this.lbConn;
+    }
+
+    private Connection getPvConn() throws SQLException {
+        if (pvConn == null || pvConn.isClosed() || !pvConn.isValid(2)) {
+            try {
+                ConfigurationSection pvSection = config.getSection("database.premium-vanish");
+
+                String url = pvSection.getString("url");
+                String user = pvSection.getString("user");;
+                String password = pvSection.getString("password");;
+
+                pvConn = DriverManager.getConnection(url, user, password);
+            }
+            catch(SQLException e) {
+                MineManiaChat.getInstance().getLogger().atError().setCause(e)
+                        .log("Could not connect to db");
+            }
         }
 
+        return this.pvConn;
     }
 
     public boolean isPlayerMuted(Player player) {
@@ -76,7 +98,7 @@ public class DataBaseController {
                             "    AND (until = 0 OR until > UNIX_TIMESTAMP())" +
                             ")";
 
-            try (PreparedStatement ps = lbConn.prepareStatement(sql)) {
+            try (PreparedStatement ps = getLbConn().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
 
                 try (ResultSet rs = ps.executeQuery()) {
@@ -105,7 +127,7 @@ public class DataBaseController {
                             "FROM premiumvanish_playerdata " +
                             "WHERE UUID = ?";
 
-            try (PreparedStatement ps =pvConn.prepareStatement(sql)) {
+            try (PreparedStatement ps = getPvConn().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
 
                 try (ResultSet rs = ps.executeQuery()) {
