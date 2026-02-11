@@ -20,10 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.github.minemaniauk.minemaniachat.commands.Broadcast;
-import com.github.minemaniauk.minemaniachat.commands.ChatClear;
-import com.github.minemaniauk.minemaniachat.commands.JmSendCommand;
-import com.github.minemaniauk.minemaniachat.commands.ServerMessage;
+import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
@@ -49,7 +46,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.1.1"
+        version = "3.1.2"
 )
 public class MineManiaChat {
 
@@ -93,6 +90,7 @@ public class MineManiaChat {
 
         CommandManager cm = getProxyServer().getCommandManager();
 
+        cm.register(cm.metaBuilder("mmchatreload").build(), new Reload());
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
         cm.register(cm.metaBuilder("message").aliases("msg").build(), new Message());
@@ -157,9 +155,11 @@ public class MineManiaChat {
     }
 
     public void reloadConfigs() {
+        this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.configuration.load();
         this.bannedWords.load();
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.dbController = new DataBaseController(this.configuration);
         this.server.getEventManager().register(this, this.chatHandler);
     }
 
