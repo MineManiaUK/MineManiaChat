@@ -36,8 +36,13 @@ public class DataBaseController {
     public DataBaseController(Configuration config) {
         this.config = config;
 
+        if (!config.getBoolean("database.enabled")){
+            return;
+        }
+
         try {
             Class.forName("org.mariadb.jdbc.Driver");
+            MineManiaChat.getInstance().getLogger().info("Initing DB Controller");
             MineManiaChat.getInstance().getLogger().info("MariaDB driver found.");
         } catch (ClassNotFoundException e) {
             MineManiaChat.getInstance().getLogger().error("MariaDB driver NOT found", e);

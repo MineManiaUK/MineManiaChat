@@ -21,35 +21,28 @@
 package com.github.minemaniauk.minemaniachat.commands;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
-import com.github.minemaniauk.minemaniachat.User;
+import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.command.SimpleCommand;
-import com.velocitypowered.api.proxy.Player;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-import java.util.Collection;
-
-public class ChatClear implements SimpleCommand {
+public class ChatEnable implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
-        ClearChat();
-    }
-
-
-    private void ClearChat(){
-        Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
-        int lines = MineManiaChat.getInstance().getConfig().getInteger("clear-chat-lines");
-
-        for (Player p : allPlayers){
-            User u = new User(p);
-            for (int i = 0; i < lines; i++) {
-                p.sendMessage(Component.empty());
-            }
-            u.sendMessage("&7&l> §7Chat has been cleared.");
+        try {
+            Configuration config = MineManiaChat.getInstance().getConfig();
+            config.set("chat-enabled", true);
+            config.save();
+            MineManiaChat.getInstance().reloadConfigs();
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Successfully &aenabled &7chat"));
+        }
+        catch (Exception e) {
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cAn error occurred. No changes have been made."));
+            MineManiaChat.getInstance().getLogger().atError().setCause(e).log("An error occurred when enabling chat");
         }
     }
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("chat.clear");
+        return invocation.source().hasPermission("chat.disable");
     }
 }

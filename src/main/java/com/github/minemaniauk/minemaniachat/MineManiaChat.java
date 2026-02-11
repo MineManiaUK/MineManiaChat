@@ -46,7 +46,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.1.2"
+        version = "3.2.0"
 )
 public class MineManiaChat {
 
@@ -57,7 +57,7 @@ public class MineManiaChat {
     private final @NotNull Configuration configuration;
     private final @NotNull Configuration bannedWords;
     private @NotNull ChatHandler chatHandler;
-    private @NotNull DataBaseController dbController;
+    private DataBaseController dbController;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
@@ -86,10 +86,15 @@ public class MineManiaChat {
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         this.messageHandler = new MessageHandler();
         this.dataManager = new DataManager(this.dataPath, this.playerDataPath);
-        this.dbController = new DataBaseController(getConfig());
+        if (configuration.getBoolean("database.enabled")){
+            this.dbController = new DataBaseController(this.configuration);
+        }
 
         CommandManager cm = getProxyServer().getCommandManager();
 
+        cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
+        cm.register(cm.metaBuilder("chatdisable").build(), new ChatDisable());
+        cm.register(cm.metaBuilder("mmchatbannedwords").build(), new BannedWords());
         cm.register(cm.metaBuilder("mmchatreload").build(), new Reload());
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
@@ -154,12 +159,21 @@ public class MineManiaChat {
         }
     }
 
+    public void reloadBannedWords() {
+        this.server.getEventManager().unregisterListener(this, this.chatHandler);
+        this.bannedWords.load();
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.server.getEventManager().register(this, this.chatHandler);
+    }
+
     public void reloadConfigs() {
         this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.configuration.load();
         this.bannedWords.load();
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
-        this.dbController = new DataBaseController(this.configuration);
+        if (configuration.getBoolean("database.enabled")){
+            this.dbController = new DataBaseController(this.configuration);
+        }
         this.server.getEventManager().register(this, this.chatHandler);
     }
 

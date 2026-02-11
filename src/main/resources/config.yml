@@ -7,20 +7,15 @@
 #
 # Author: MineManiaUK Staff
 
+# Chat Enabled
+# Only users with permission chat.bypass.disable can chat if this is false
+chat-enabled: true
 
 # Clear Chat Lines
 clear-chat-lines: 100
 
-# In order of priority.
-# The first one will have the most priority.
-format:
-  # This will have the permissions chat.default
-  default:
-    prefix: ""
-    postfix: ""
-
-
 database:
+  enabled: true
   litebans:
     url: ""
     user: ""
@@ -30,3 +25,11 @@ database:
     url: ""
     user: ""
     password: ""
+
+# In order of priority.
+# The first one will have the most priority.
+format:
+  # This will have the permissions chat.default
+  default:
+    prefix: ""
+    postfix: ""

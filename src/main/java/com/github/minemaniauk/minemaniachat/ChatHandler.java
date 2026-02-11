@@ -65,8 +65,17 @@ public class ChatHandler {
             event.setResult(PlayerChatEvent.ChatResult.denied());
 
             // Check if muted via Database
-            if (MineManiaChat.getInstance().getDbController().isPlayerMuted(sendingPlayer)){
-                return;
+            if (configuration.getBoolean("database.enabled")){
+                if (MineManiaChat.getInstance().getDbController().isPlayerMuted(sendingPlayer)){
+                    return;
+                }
+            }
+
+            if (!sendingPlayer.hasPermission("chat.bypass.disable")) {
+                if (!configuration.getBoolean("chat-enabled")){
+                    new User(sendingPlayer).sendMessage("&c&l> &7Chat is currently &cdisabled");
+                    return;
+                }
             }
 
             // Check for URLs
