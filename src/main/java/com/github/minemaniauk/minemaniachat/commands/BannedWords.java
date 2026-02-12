@@ -62,10 +62,8 @@ public class BannedWords implements SimpleCommand {
                 return;
             case "check":
                 try {
-                    Configuration bannedWordConfig = MineManiaChat.getInstance().getBannedWords();
-                    List<String> bannedWords = bannedWordConfig.getListString("banned-words");
-                    boolean wordContained = bannedWords.contains(wordInput);
-                    if (wordContained){
+                    boolean wordBanned = MineManiaChat.getInstance().getChatHandler().containsBannedWords(wordInput);
+                    if (wordBanned){
                         invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7\"" + "&f" + wordInput + "&7" + "\" is &cbanned"));
                     }
                     else {
