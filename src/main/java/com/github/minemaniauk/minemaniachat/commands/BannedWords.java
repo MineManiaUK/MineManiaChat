@@ -37,7 +37,7 @@ public class BannedWords implements SimpleCommand {
             return;
         }
 
-        String wordInput = args[1];
+        String wordInput = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
 
         switch (args[0]){
             case "add":
