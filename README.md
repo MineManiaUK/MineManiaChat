@@ -16,8 +16,8 @@ A chat plugin for velocity.
 - /disablepm or /mutepm <Player|global> | Permission: "chat.private-message.mute" | Disable private messages for a user or globally
 - /togglespy or /spy | Permission: "chat.private-message.spy" | Toggles spy which allows the user to see other players private messages  
 - /servermessage or /servermsg or /smsg <Player> <Message> | Permission: "chat.server-message.send" | Send a private server message to a player
-- /broadcast | Permission: "chat.broadcast" | Broadcast a message network wide
-- /broadcastserver | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
+- /broadcast <message> | Permission: "chat.broadcast" | Broadcast a message network wide
+- /broadcastserver <server> <message> | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
 
 ## Permissions
 
