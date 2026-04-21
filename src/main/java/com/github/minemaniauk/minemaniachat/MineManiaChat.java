@@ -104,6 +104,7 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("togglespy").aliases("spy").build(), new Spy());
         cm.register(cm.metaBuilder("servermessage").aliases("servermsg", "smsg").build(), new ServerMessage());
         cm.register(cm.metaBuilder("broadcast").build(), new Broadcast());
+        cm.register(cm.metaBuilder("broadcastserver").build(), new BroadcastServer());
     }
 
     @Subscribe
