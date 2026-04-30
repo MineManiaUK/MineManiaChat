@@ -21,6 +21,11 @@
 package com.github.minemaniauk.minemaniachat;
 
 
+import com.eduardomcb.discord.webhook.WebhookClient;
+import com.eduardomcb.discord.webhook.WebhookManager;
+import com.eduardomcb.discord.webhook.models.Embed;
+import com.eduardomcb.discord.webhook.models.Field;
+import com.eduardomcb.discord.webhook.models.Message;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
@@ -29,7 +34,8 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -90,7 +96,7 @@ public class ChatHandler {
             // Check for banned words.
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
                 if (this.containsBannedWords(event.getMessage())) {
-                    new User(sendingPlayer).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
+                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
                     notifyStaff(sendingPlayer, "Sent Message with Banned words!", event.getMessage());
                     return;
                 }
@@ -197,5 +203,37 @@ public class ChatHandler {
                 u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message);
             }
         }
+
+        if (!configuration.getBoolean("webhook-enabled") || configuration.getString("webhook-url").isEmpty())
+            return;
+
+        WebhookManager webhookManager = new WebhookManager().setChannelUrl(configuration.getString("webhook-url"));
+
+        webhookManager.setListener(new WebhookClient.Callback() {
+            @Override
+            public void onSuccess(String response) { }
+
+            @Override
+            public void onFailure(int statusCode, String errorMessage) {
+                MineManiaChat.getInstance().getLogger().error("Could not send discord webhook message " + "Code: " + statusCode + " error: " + errorMessage);
+            }
+        });
+
+        LocalDateTime timeNow = LocalDateTime.now();
+        String formatedTimeNow = timeNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        List<Field> fields = new ArrayList<>();
+        fields.add(new Field("Player", player.getUsername(), false));
+
+        Embed embed = new Embed();
+        embed.setColor(0xff0000);
+        embed.setTitle("Banned word Alert");
+        embed.setFields(fields.toArray(new Field[0]));
+        embed.setDescription(message);
+        embed.setTimestamp(formatedTimeNow);
+
+        webhookManager.setMessage(new Message().setUsername("Banned word Alert"));
+        webhookManager.setEmbeds(new Embed[] {embed});
+
+        webhookManager.exec();
     }
 }
