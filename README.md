@@ -7,17 +7,17 @@ A chat plugin for velocity.
 
 - /chatenable | Permission: "chat.disable" | Enables chat globally for all players
 - /chatdisable | Permission: "chat.disable"| Disables chat globally for all players without "chat.joinmessage.disable"
-- /mmchatbannedwords <add|check|remove> <word> | Permission: "chat.bannedwords" | Edit or check the banned words list
+- /mmchatbannedwords \<add|check|remove\> \<word\> | Permission: "chat.bannedwords" | Edit or check the banned words list
 - /mmchatreload | Permission: "chat.reload" | Reloads all configs 
 - /clearchat or /cc | Permission: "chat.clear" | Clears the chat history
 - /joinmessagesend or /jmsend | Permission: "chat.joinmessage.fakesend" | Send a join message for yourself (For users with chat.joinmessage.disable)
-- /message or /msg <Player> <Message> | Permission: "chat.private-message.allow" | Send private messages to other users    
-- /enablepm or /unmutepm <Player|global> | Permission: "chat.private-message.mute" | Enable private messages for a user or globally 
-- /disablepm or /mutepm <Player|global> | Permission: "chat.private-message.mute" | Disable private messages for a user or globally
+- /message or /msg \<Player\> \<Message\> | Permission: "chat.private-message.allow" | Send private messages to other users    
+- /enablepm or /unmutepm \<Player|global\> | Permission: "chat.private-message.mute" | Enable private messages for a user or globally 
+- /disablepm or /mutepm \<Player|global\> | Permission: "chat.private-message.mute" | Disable private messages for a user or globally
 - /togglespy or /spy | Permission: "chat.private-message.spy" | Toggles spy which allows the user to see other players private messages  
-- /servermessage or /servermsg or /smsg <Player> <Message> | Permission: "chat.server-message.send" | Send a private server message to a player
-- /broadcast <message> | Permission: "chat.broadcast" | Broadcast a message network wide
-- /broadcastserver <server> <message> | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
+- /servermessage or /servermsg or /smsg \<Player\> \<Message\> | Permission: "chat.server-message.send" | Send a private server message to a player
+- /broadcast \<message\> | Permission: "chat.broadcast" | Broadcast a message network wide
+- /broadcastserver \<server\> \<message\> | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
 
 ## Permissions
 
