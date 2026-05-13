@@ -24,6 +24,7 @@ A chat plugin for velocity.
 - chat.bypass.disable | Allows a user to bypass a global chat disablement
 - chat.bypass.filter.url | Allows a user to bypass the URL filter to send URLs in chat
 - chat.bypass.filter.banned-words | Allows a user to bypass the Banned words filter to send banned words in chat
+- chat.bypass.filter.spam | Allows a user to bypass the spam filter
 - chat.bypass.private-message.disablement | Allows a user to send private messages even when they have been disabled with /disablepm (Global or individual)
 - chat.server-message.alert | Any user with this permission will receive a message when another user is sent a server message. 
 - chat.joinmessage.disable | Any user with this permission will have their global join message hidden.
