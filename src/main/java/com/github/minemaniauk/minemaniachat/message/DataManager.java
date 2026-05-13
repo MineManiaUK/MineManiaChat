@@ -81,6 +81,22 @@ public class DataManager {
         playerFile.save();
     }
 
+    public void enableStaffAlerts(Player player) {
+        Configuration playerFile = ConfigurationFactory.YAML.create(playerDataPath.toFile(), player.getUniqueId().toString());
+        playerFile.load();
+
+        playerFile.set("staff-alerts-enabled", true);
+        playerFile.save();
+    }
+
+    public void disableStaffAlerts(Player player) {
+        Configuration playerFile = ConfigurationFactory.YAML.create(playerDataPath.toFile(), player.getUniqueId().toString());
+        playerFile.load();
+
+        playerFile.set("staff-alerts-enabled", false);
+        playerFile.save();
+    }
+
     public boolean isGlobalPmsEnabled() {
         pmData.load();
         return pmData.getBoolean("global-pms-enabled", true);
@@ -111,4 +127,10 @@ public class DataManager {
         return playerFile.getBoolean("is-spying", false);
     }
 
+    public boolean isStaffAlertsEnabled(Player player){
+        Configuration playerFile = ConfigurationFactory.YAML.create(playerDataPath.toFile(), player.getUniqueId().toString());
+        playerFile.load();
+
+        return playerFile.getBoolean("staff-alerts-enabled", true);
+    }
 }

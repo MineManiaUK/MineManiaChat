@@ -147,10 +147,10 @@ public class ChatHandler {
         String prefix = "";
         String postfix = "";
 
-        // Loop though chat formatting.
         for (String key : formatSection.getKeys()) {
             String permission = "chat." + key;
             if (!player.hasPermission(permission)) continue;
+
             prefix = formatSection.getSection(key).getString("prefix", "");
             postfix = formatSection.getSection(key).getString("postfix", "");
             break;
@@ -159,11 +159,22 @@ public class ChatHandler {
         if (!prefix.isBlank()) {
             prefix = prefix + " ";
         }
+
         if (!postfix.isBlank()) {
             postfix = " " + postfix;
         }
 
-        return prefix + "&f" + player.getUsername() + " &7: &f" + message + "&f" + postfix;
+        String displayMessage = message;
+
+        if (!player.hasPermission("chat.format")) {
+            displayMessage = escapeLegacyFormatting(displayMessage);
+        }
+
+        return prefix + "&f" + player.getUsername() + " &7: &f" + displayMessage + "&f" + postfix;
+    }
+
+    private String escapeLegacyFormatting(String message) {
+        return message.replace("&", "＆").replace("§", "§\u200B");
     }
 
     /**
@@ -179,13 +190,6 @@ public class ChatHandler {
         );
         List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
 
-        String[] messageWords = message.split(" ");
-        for (String word : messageWords){
-            if (bannedPhrases.contains(word)){
-                return true;
-            }
-        }
-        
         // Loop though each word in the message.
         for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {
 
@@ -271,7 +275,7 @@ public class ChatHandler {
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
         for (Player p : allPlayers){
-            if (p.hasPermission("chat.notify")){
+            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)){
                 User u = new User(p);
                 u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message);
             }
