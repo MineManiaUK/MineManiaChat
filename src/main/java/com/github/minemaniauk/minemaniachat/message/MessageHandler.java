@@ -43,25 +43,36 @@ public class MessageHandler {
 
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
             if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
-                new User(from).sendMessage("&c&l> &7Please do not use &cbanned words &7in your message.");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with Banned words!", message);
+                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message);
                 return;
             }
         }
 
         if (!from.hasPermission("chat.bypass.filter.url")) {
             if (MineManiaChat.getInstance().getChatHandler().URL_PATTERN.matcher(message).find()) {
-                new User(from).sendMessage("&c&l> &7Please do not use &cURLs &7in your message.");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with a URL!", message);
+                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with a URL!", "URL Alert", message);
                 return;
             }
         }
 
         if (!from.hasPermission("chat.bypass.private-message.disablement")) {
             if (!MineManiaChat.getInstance().getDataManager().CanPlayerPm(from)) {
-                new User(from).sendMessage("&cYou are not allowed to use private messaging");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but has private messaging disabled", message);
+                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but has private messaging disabled", "PM disabled alert", message);
                 return;
+            }
+        }
+
+        if (MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.enabled")) {
+            MineManiaChat.getInstance().getChatHandler().updatePlayerMessageTimes(from);
+            if (!from.hasPermission("chat.bypass.filter.spam")) {
+                if (MineManiaChat.getInstance().getChatHandler().CheckSpam(from)) {
+                    new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                    MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " and Triggered the spam filter!", "Spam Filter Alert", message);
+                    return;
+                }
             }
         }
 

@@ -18,6 +18,16 @@ clear-chat-lines: 100
 webhook-enabled:
 webhook-url:
 
+spam-detection:
+  enabled: true
+  store-last: 25
+  min-time-between-messages: 1
+  message-density:
+    enabled: true
+    max-amount: 15
+    over-time: 5
+
+
 database:
   enabled: true
   litebans:

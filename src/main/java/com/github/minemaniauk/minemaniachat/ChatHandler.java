@@ -34,6 +34,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -52,6 +53,8 @@ public class ChatHandler {
     public final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)|(www\\.[^\\s]+)|([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
     );
+
+    private final HashMap<Player, List<Instant>> playerMessageTimes = new HashMap<>();
 
     /**
      * Used to create a new instance of the chat handler.
@@ -84,22 +87,35 @@ public class ChatHandler {
                 }
             }
 
-            // Check for URLs
-            if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
-                if (URL_PATTERN.matcher(event.getMessage()).find()) {
-                    new User(sendingPlayer).sendMessage("&c&l> &7Please do not use &cURLs &7in your message.");
-                    notifyStaff(sendingPlayer, "Sent Message with a URL!", event.getMessage());
-                    return;
-                }
-            }
-
             // Check for banned words.
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
                 if (this.containsBannedWords(event.getMessage())) {
                     new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
-                    notifyStaff(sendingPlayer, "Sent Message with Banned words!", event.getMessage());
+                    notifyStaff(sendingPlayer, "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
                     return;
                 }
+            }
+
+            // Check for URLs
+            if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
+                if (URL_PATTERN.matcher(event.getMessage()).find()) {
+                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+                    notifyStaff(sendingPlayer, "Sent Message with a URL!", "URL Alert", event.getMessage());
+                    return;
+                }
+            }
+
+            if (configuration.getBoolean("spam-detection.enabled")){
+                if (!sendingPlayer.hasPermission("chat.bypass.filter.spam")) {
+                    if (CheckSpam(sendingPlayer)){
+                        new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+                        notifyStaff(sendingPlayer, "Triggered the spam filter!", "Spam Filter Alert", event.getMessage());
+                        return;
+                    }
+                }
+
+                // Update Message time history list
+                updatePlayerMessageTimes(sendingPlayer);
             }
 
             String formattedMessage = this.formatMessage(event.getMessage(), sendingPlayer);
@@ -131,10 +147,10 @@ public class ChatHandler {
         String prefix = "";
         String postfix = "";
 
-        // Loop though chat formatting.
         for (String key : formatSection.getKeys()) {
             String permission = "chat." + key;
             if (!player.hasPermission(permission)) continue;
+
             prefix = formatSection.getSection(key).getString("prefix", "");
             postfix = formatSection.getSection(key).getString("postfix", "");
             break;
@@ -143,11 +159,22 @@ public class ChatHandler {
         if (!prefix.isBlank()) {
             prefix = prefix + " ";
         }
+
         if (!postfix.isBlank()) {
             postfix = " " + postfix;
         }
 
-        return prefix + "&f" + player.getUsername() + " &7: &f" + message + "&f" + postfix;
+        String displayMessage = message;
+
+        if (!player.hasPermission("chat.format")) {
+            displayMessage = escapeLegacyFormatting(displayMessage);
+        }
+
+        return prefix + "&f" + player.getUsername() + " &7: &f" + displayMessage + "&f" + postfix;
+    }
+
+    private String escapeLegacyFormatting(String message) {
+        return message.replace("&", "＆").replace("§", "§\u200B");
     }
 
     /**
@@ -194,11 +221,61 @@ public class ChatHandler {
         return false;
     }
 
-    public void notifyStaff(Player player, String staffMessage ,String message){
+    public void updatePlayerMessageTimes(Player player) {
+        if (!configuration.getBoolean("spam-detection.enabled")) {
+            return;
+        }
+
+        int storeLast = configuration.getInteger("spam-detection.store-last");
+
+        playerMessageTimes.putIfAbsent(player, new ArrayList<>());
+
+        List<Instant> times = playerMessageTimes.get(player);
+
+        if (times.size() >= storeLast) {
+            times.remove(0);
+        }
+
+        times.add(Instant.now());
+    }
+
+    public boolean CheckSpam(Player player) {
+
+        List<Instant> messageTimes = playerMessageTimes.get(player);
+
+        if (messageTimes == null || messageTimes.isEmpty()){
+            return false;
+        }
+
+        // Check if min-time-between-messages is violated
+        if (Instant.now().isBefore(messageTimes.getLast().plusSeconds(configuration.getLong("spam-detection.min-time-between-messages")))){
+            return true;
+        }
+
+        // Check message density if enabled
+        if (configuration.getBoolean("spam-detection.message-density.enabled")){
+                long maxAmount = configuration.getLong("spam-detection.message-density.max-amount");
+                long overTimeSeconds = configuration.getLong("spam-detection.message-density.over-time");
+
+                Instant now = Instant.now();
+                Instant cutoff = now.minusSeconds(overTimeSeconds);
+
+                List<Instant> times = playerMessageTimes.computeIfAbsent(player, p -> new ArrayList<>());
+
+                // Remove messages outside the density window
+                times.removeIf(time -> time.isBefore(cutoff));
+
+                return times.size() > maxAmount;
+        }
+
+        return false;
+    }
+
+    public void notifyStaff(Player player, String staffMessage, String discordTitle ,String message){
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
         for (Player p : allPlayers){
-            if (p.hasPermission("chat.notify")){
+            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)){
                 User u = new User(p);
                 u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message);
             }
@@ -226,12 +303,12 @@ public class ChatHandler {
 
         Embed embed = new Embed();
         embed.setColor(0xff0000);
-        embed.setTitle("Banned word Alert");
+        embed.setTitle(discordTitle);
         embed.setFields(fields.toArray(new Field[0]));
         embed.setDescription(message);
         embed.setTimestamp(formatedTimeNow);
 
-        webhookManager.setMessage(new Message().setUsername("Banned word Alert"));
+        webhookManager.setMessage(new Message().setUsername("Minemania Chat Alert"));
         webhookManager.setEmbeds(new Embed[] {embed});
 
         webhookManager.exec();

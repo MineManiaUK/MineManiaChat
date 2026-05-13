@@ -88,7 +88,7 @@ public class BannedWords implements SimpleCommand {
                         invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Successfully removed \"" + "&a" + wordInput + "&7" + "\" from the banned words list"));
                     }
                     else {
-                        invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&c&l> Could not remove \"" + "&f" + wordInput + "&7" + "\" from the banned words list because it is not on the list"));
+                        invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &7Could not remove \"" + "&f" + wordInput + "&7" + "\" from the banned words list because it is not on the list"));
                     }
                 }
                 catch (Exception e) {

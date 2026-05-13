@@ -18,17 +18,20 @@ A chat plugin for velocity.
 - /servermessage or /servermsg or /smsg \<Player\> \<Message\> | Permission: "chat.server-message.send" | Send a private server message to a player
 - /broadcast \<message\> | Permission: "chat.broadcast" | Broadcast a message network wide
 - /broadcastserver \<server\> \<message\> | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
+- /togglechatalerts or /chatalerts |  Permission: "chat.notify" | Enable or disable receiving chat filter alerts
 
 ## Permissions
 
 - chat.bypass.disable | Allows a user to bypass a global chat disablement
 - chat.bypass.filter.url | Allows a user to bypass the URL filter to send URLs in chat
 - chat.bypass.filter.banned-words | Allows a user to bypass the Banned words filter to send banned words in chat
+- chat.bypass.filter.spam | Allows a user to bypass the spam filter
 - chat.bypass.private-message.disablement | Allows a user to send private messages even when they have been disabled with /disablepm (Global or individual)
+- chat.format | Allows a user to use the & chat formatting
 - chat.server-message.alert | Any user with this permission will receive a message when another user is sent a server message. 
 - chat.joinmessage.disable | Any user with this permission will have their global join message hidden.
 - chat.joinmessage.alert | Any user with this permission will see hidden join messages from users with "chat.joinmessage.disable"
-- chat.notify | Any user with this permission will be alerted when a chat filter is triggered
+- chat.notify | Any user with this permission will be alerted when a chat filter is triggered (If they have them enabled see command /togglechatalerts)
 
 # Post 3.0.0 Warnings
 
