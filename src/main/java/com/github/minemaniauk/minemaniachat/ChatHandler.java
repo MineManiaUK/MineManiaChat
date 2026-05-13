@@ -179,6 +179,13 @@ public class ChatHandler {
         );
         List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
 
+        String[] messageWords = message.split(" ");
+        for (String word : messageWords){
+            if (bannedPhrases.contains(word)){
+                return true;
+            }
+        }
+        
         // Loop though each word in the message.
         for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {
 
