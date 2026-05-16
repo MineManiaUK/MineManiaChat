@@ -26,6 +26,7 @@ spam-detection:
     enabled: true
     max-amount: 15
     over-time: 5
+    violation-cooldown: 10
 
 
 database:

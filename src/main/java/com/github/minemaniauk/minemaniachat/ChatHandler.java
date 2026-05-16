@@ -55,6 +55,7 @@ public class ChatHandler {
     );
 
     private final HashMap<Player, List<Instant>> playerMessageTimes = new HashMap<>();
+    public final HashMap<Player, Instant> playerCooldowns = new HashMap<>();
 
     /**
      * Used to create a new instance of the chat handler.
@@ -107,8 +108,26 @@ public class ChatHandler {
 
             if (configuration.getBoolean("spam-detection.enabled")){
                 if (!sendingPlayer.hasPermission("chat.bypass.filter.spam")) {
-                    if (CheckSpam(sendingPlayer)){
-                        new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+
+                    if (playerCooldowns.containsKey(sendingPlayer) && configuration.getBoolean("spam-detection.message-density.enabled")) {
+                        if (Instant.now().isBefore(playerCooldowns.get(sendingPlayer))){
+                            new User(sendingPlayer).sendMessage("&c&l> &cYou are sending messages too fast. Try again soon");
+                            notifyStaff(sendingPlayer, "Is spam cool downed!", "Spam Filter Cooldown Alert", event.getMessage());
+                            return;
+                        }
+                        else {
+                            playerCooldowns.remove(sendingPlayer);
+                        }
+                    }
+
+                    var checkResult = CheckSpam(sendingPlayer);
+
+                    if (checkResult != SpamFilterResults.NONE){
+                        if (checkResult == SpamFilterResults.MESSAGE_DENSITY){
+                            playerCooldowns.put(sendingPlayer, Instant.now().plusSeconds(configuration.getLong("spam-detection.message-density.violation-cooldown")));
+                        }
+
+                        new User(sendingPlayer).sendMessage("&c&l> &cYou are sending messages too fast");
                         notifyStaff(sendingPlayer, "Triggered the spam filter!", "Spam Filter Alert", event.getMessage());
                         return;
                     }
@@ -239,17 +258,17 @@ public class ChatHandler {
         times.add(Instant.now());
     }
 
-    public boolean CheckSpam(Player player) {
+    public SpamFilterResults CheckSpam(Player player) {
 
         List<Instant> messageTimes = playerMessageTimes.get(player);
 
         if (messageTimes == null || messageTimes.isEmpty()){
-            return false;
+            return SpamFilterResults.NONE;
         }
 
         // Check if min-time-between-messages is violated
         if (Instant.now().isBefore(messageTimes.getLast().plusSeconds(configuration.getLong("spam-detection.min-time-between-messages")))){
-            return true;
+            return SpamFilterResults.MIN_TIME;
         }
 
         // Check message density if enabled
@@ -265,10 +284,11 @@ public class ChatHandler {
                 // Remove messages outside the density window
                 times.removeIf(time -> time.isBefore(cutoff));
 
-                return times.size() > maxAmount;
+                if (times.size() >= maxAmount)
+                    return SpamFilterResults.MESSAGE_DENSITY;
         }
 
-        return false;
+        return SpamFilterResults.NONE;
     }
 
     public void notifyStaff(Player player, String staffMessage, String discordTitle ,String message){

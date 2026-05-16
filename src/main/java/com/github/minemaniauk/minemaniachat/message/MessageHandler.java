@@ -21,9 +21,12 @@
 package com.github.minemaniauk.minemaniachat.message;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.SpamFilterResults;
 import com.github.minemaniauk.minemaniachat.User;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
+import java.time.Instant;
 
 
 public class MessageHandler {
@@ -68,8 +71,25 @@ public class MessageHandler {
         if (MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.enabled")) {
             MineManiaChat.getInstance().getChatHandler().updatePlayerMessageTimes(from);
             if (!from.hasPermission("chat.bypass.filter.spam")) {
-                if (MineManiaChat.getInstance().getChatHandler().CheckSpam(from)) {
-                    new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                if (MineManiaChat.getInstance().getChatHandler().playerCooldowns.containsKey(from) && MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.message-density.enabled")) {
+                    if (Instant.now().isBefore(MineManiaChat.getInstance().getChatHandler().playerCooldowns.get(from))){
+                        new User(from).sendMessage("&c&l> &cYou are sending messages too fast. Try again soon");
+                        MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but is spam cool downed!", "Spam cooldown Alert", message);
+                        return;
+                    }
+                    else {
+                        MineManiaChat.getInstance().getChatHandler().playerCooldowns.remove(from);
+                    }
+                }
+
+                var checkResult = MineManiaChat.getInstance().getChatHandler().CheckSpam(from);
+
+                if (checkResult != SpamFilterResults.NONE){
+                    if (checkResult == SpamFilterResults.MESSAGE_DENSITY){
+                        MineManiaChat.getInstance().getChatHandler().playerCooldowns.put(from, Instant.now().plusSeconds(MineManiaChat.getInstance().getConfig().getLong("spam-detection.message-density.violation-cooldown")));
+                    }
+
+                    new User(from).sendMessage("&c&l> &cYou are sending messages too fast");
                     MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " and Triggered the spam filter!", "Spam Filter Alert", message);
                     return;
                 }
