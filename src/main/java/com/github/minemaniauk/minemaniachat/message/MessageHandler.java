@@ -31,14 +31,14 @@ import java.time.Instant;
 
 public class MessageHandler {
 
-    public void sendPlayerMessage(Player from, Player to, String message){
+    public void sendPlayerMessage(Player from, Player to, String message) {
 
-        if (MineManiaChat.getInstance().getDbController().isPlayerMuted(from)){
+        if (MineManiaChat.getInstance().getDbController().isPlayerMuted(from)) {
             return;
         }
 
         if (!from.hasPermission("chat.bypass.disable")) {
-            if (!MineManiaChat.getInstance().getConfig().getBoolean("chat-enabled")){
+            if (!MineManiaChat.getInstance().getConfig().getBoolean("chat-enabled")) {
                 new User(from).sendMessage("&c&l> &7Chat is currently &cdisabled");
                 return;
             }
@@ -69,23 +69,22 @@ public class MessageHandler {
         }
 
         if (MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.enabled")) {
-            MineManiaChat.getInstance().getChatHandler().updatePlayerMessageTimes(from);
             if (!from.hasPermission("chat.bypass.filter.spam")) {
+
                 if (MineManiaChat.getInstance().getChatHandler().playerCooldowns.containsKey(from) && MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.message-density.enabled")) {
-                    if (Instant.now().isBefore(MineManiaChat.getInstance().getChatHandler().playerCooldowns.get(from))){
+                    if (Instant.now().isBefore(MineManiaChat.getInstance().getChatHandler().playerCooldowns.get(from))) {
                         new User(from).sendMessage("&c&l> &cYou are sending messages too fast. Try again soon");
                         MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but is spam cool downed!", "Spam cooldown Alert", message);
                         return;
-                    }
-                    else {
+                    } else {
                         MineManiaChat.getInstance().getChatHandler().playerCooldowns.remove(from);
                     }
                 }
 
                 var checkResult = MineManiaChat.getInstance().getChatHandler().CheckSpam(from);
 
-                if (checkResult != SpamFilterResults.NONE){
-                    if (checkResult == SpamFilterResults.MESSAGE_DENSITY){
+                if (checkResult != SpamFilterResults.NONE) {
+                    if (checkResult == SpamFilterResults.MESSAGE_DENSITY) {
                         MineManiaChat.getInstance().getChatHandler().playerCooldowns.put(from, Instant.now().plusSeconds(MineManiaChat.getInstance().getConfig().getLong("spam-detection.message-density.violation-cooldown")));
                     }
 
@@ -93,28 +92,30 @@ public class MessageHandler {
                     MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " and Triggered the spam filter!", "Spam Filter Alert", message);
                     return;
                 }
+
+                MineManiaChat.getInstance().getChatHandler().updatePlayerMessageTimes(to);
             }
-        }
 
-        MineManiaChat.getInstance().getLogger().info(from.getUsername() + " -> " + to.getUsername() + ": " + message);
+            MineManiaChat.getInstance().getLogger().info(from.getUsername() + " -> " + to.getUsername() + ": " + message);
 
-        for (Player player : MineManiaChat.getInstance().getProxyServer().getAllPlayers()){
-            if (player.hasPermission("chat.private-message.spy") && MineManiaChat.getInstance().getDataManager().isSpying(player)){
-                new User(player).sendMessage("&8&o" + from.getUsername() + " -> " + to.getUsername() + " : &o" + message);
+            for (Player player : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+                if (player.hasPermission("chat.private-message.spy") && MineManiaChat.getInstance().getDataManager().isSpying(player)) {
+                    new User(player).sendMessage("&8&o" + from.getUsername() + " -> " + to.getUsername() + " : &o" + message);
+                }
             }
+
+            from.sendMessage(
+                    LegacyComponentSerializer.legacyAmpersand().deserialize(
+                            "&f✉ &7&ome -> &f&o" + to.getUsername() + "&7&o: " + message
+                    )
+            );
+
+            to.sendMessage(
+                    LegacyComponentSerializer.legacyAmpersand().deserialize(
+                            "&f✉ &f&o" + from.getUsername() + " &7-> &7&ome &7&o: " + message
+                    )
+            );
         }
-
-        from.sendMessage(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                        "&f✉ &7&ome -> &f&o" + to.getUsername() + "&7&o: " + message
-                )
-        );
-
-        to.sendMessage(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                        "&f✉ &f&o" + from.getUsername() + " &7-> &7&ome &7&o: " + message
-                )
-        );
     }
 
     public void sendConsoleMessage(Player to, String message) {
