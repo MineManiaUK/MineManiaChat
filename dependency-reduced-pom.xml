@@ -4,7 +4,7 @@
   <groupId>com.github.minemaniauk</groupId>
   <artifactId>MineManiaChat</artifactId>
   <name>MineManiaChat</name>
-  <version>3.3.2</version>
+  <version>3.3.3</version>
   <build>
     <resources>
       <resource>
