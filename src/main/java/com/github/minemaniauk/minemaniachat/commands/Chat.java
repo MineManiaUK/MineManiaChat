@@ -36,7 +36,8 @@ public class Chat implements SimpleCommand {
 
             MineManiaChat.getInstance().getProxyServer().getEventManager().fireAndForget(event);
         }
-
-        invocation.source().sendPlainMessage("Must be a player");
+        else {
+            invocation.source().sendPlainMessage("Executor must be a player");
+        }
     }
 }
