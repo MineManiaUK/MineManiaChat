@@ -19,6 +19,8 @@ A chat plugin for velocity.
 - /broadcast \<message\> | Permission: "chat.broadcast" | Broadcast a message network wide
 - /broadcastserver \<server\> \<message\> | Permission: "chat.broadcast" | Broadcast a message to a specific backend server 
 - /togglechatalerts or /chatalerts |  Permission: "chat.notify" | Enable or disable receiving chat filter alerts
+- /chat or /c or /talk \<Message\> | Permission: None | Triggers a chat event with a message this allows a workaround for Mojang's age verification
+- /mmchatspamcooldown \<check|reset\> \<player\> | Permisson: "chat.manage.spamcooldown" | Allows staff to check or remove a players spam cooldown
 
 ## Permissions
 
