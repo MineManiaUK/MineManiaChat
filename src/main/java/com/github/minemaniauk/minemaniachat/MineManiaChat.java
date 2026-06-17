@@ -38,7 +38,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -47,7 +46,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.3.1"
+        version = "3.3.4"
 )
 public class MineManiaChat {
 
@@ -108,6 +107,7 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("broadcastserver").build(), new BroadcastServer());
         cm.register(cm.metaBuilder("togglechatalerts").aliases("chatalerts").build(), new Alerts());
         cm.register(cm.metaBuilder("chat").aliases("c", "talk").build(), new Chat());
+        cm.register(cm.metaBuilder("mmchatspamcooldown").build(), new SpamCooldown());
     }
 
     @Subscribe
