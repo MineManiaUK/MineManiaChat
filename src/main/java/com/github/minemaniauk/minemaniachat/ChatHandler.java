@@ -34,6 +34,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -111,8 +112,8 @@ public class ChatHandler {
 
                     if (playerCooldowns.containsKey(sendingPlayer) && configuration.getBoolean("spam-detection.message-density.enabled")) {
                         if (Instant.now().isBefore(playerCooldowns.get(sendingPlayer))){
+                            playerCooldowns.put(sendingPlayer, playerCooldowns.get(sendingPlayer).plusSeconds(configuration.getLong("spam-detection.message-density.violation-cooldown")));
                             new User(sendingPlayer).sendMessage("&c&l> &cYou are sending messages too fast. Try again soon");
-                            notifyStaff(sendingPlayer, "Is spam cool downed!", "Spam Filter Cooldown Alert", event.getMessage());
                             return;
                         }
                         else {
@@ -125,6 +126,7 @@ public class ChatHandler {
                     if (checkResult != SpamFilterResults.NONE){
                         if (checkResult == SpamFilterResults.MESSAGE_DENSITY){
                             playerCooldowns.put(sendingPlayer, Instant.now().plusSeconds(configuration.getLong("spam-detection.message-density.violation-cooldown")));
+                            notifyStaff(sendingPlayer, "Is spam cool downed!", "Spam Filter Cooldown Alert", event.getMessage());
                         }
 
                         new User(sendingPlayer).sendMessage("&c&l> &cYou are sending messages too fast");
@@ -284,11 +286,25 @@ public class ChatHandler {
                 // Remove messages outside the density window
                 times.removeIf(time -> time.isBefore(cutoff));
 
-                if (times.size() >= maxAmount)
-                    return SpamFilterResults.MESSAGE_DENSITY;
+            if (times.size() + 1 > maxAmount)
+                return SpamFilterResults.MESSAGE_DENSITY;
         }
 
         return SpamFilterResults.NONE;
+    }
+
+    public long CheckCooldownTime(Player player) {
+        if (!playerCooldowns.containsKey(player)) {
+            return 0;
+        }
+
+        long time =  Duration.between(Instant.now(), playerCooldowns.get(player)).toSeconds();
+
+        if (time < 0){
+            return 0;
+        }
+
+        return time;
     }
 
     public void notifyStaff(Player player, String staffMessage, String discordTitle ,String message){

@@ -46,7 +46,7 @@ import java.util.*;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.3.1"
+        version = "3.3.4"
 )
 public class MineManiaChat {
 
@@ -106,6 +106,8 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("broadcast").build(), new Broadcast());
         cm.register(cm.metaBuilder("broadcastserver").build(), new BroadcastServer());
         cm.register(cm.metaBuilder("togglechatalerts").aliases("chatalerts").build(), new Alerts());
+        cm.register(cm.metaBuilder("chat").aliases("c", "talk").build(), new Chat());
+        cm.register(cm.metaBuilder("mmchatspamcooldown").build(), new SpamCooldown());
     }
 
     @Subscribe
