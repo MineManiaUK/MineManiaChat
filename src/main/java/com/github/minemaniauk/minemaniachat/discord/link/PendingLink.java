@@ -18,12 +18,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat;
+package com.github.minemaniauk.minemaniachat.discord.link;
 
-public enum SpamFilterResults {
-    NONE,
-    MIN_TIME,
-    MESSAGE_DENSITY
+import java.util.UUID;
+
+public class PendingLink {
+
+    private static final long EXPIRY_TIME = 5 * 60 * 1000;
+
+    private final UUID minecraftUuid;
+    private final String minecraftUsername;
+    private final long createdAt;
+
+    public PendingLink(UUID minecraftUuid, String minecraftUsername) {
+        this.minecraftUuid = minecraftUuid;
+        this.minecraftUsername = minecraftUsername;
+        this.createdAt = System.currentTimeMillis();
+    }
+
+    public UUID getMinecraftUuid() {
+        return minecraftUuid;
+    }
+
+    public String getMinecraftUsername() {
+        return minecraftUsername;
+    }
+
+    public boolean isExpired() {
+        return System.currentTimeMillis() - createdAt > EXPIRY_TIME;
+    }
 }
-
-

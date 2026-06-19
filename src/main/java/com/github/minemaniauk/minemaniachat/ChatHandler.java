@@ -154,7 +154,13 @@ public class ChatHandler {
                             formattedMessage
                     )
             );
+
+            if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
+                MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
+            }
         }
+
+
 
     /**
      * Used to append chat formatting to the message.
@@ -348,5 +354,9 @@ public class ChatHandler {
         webhookManager.setEmbeds(new Embed[] {embed});
 
         webhookManager.exec();
+    }
+
+    public void ForwardDiscordMessage() {
+
     }
 }

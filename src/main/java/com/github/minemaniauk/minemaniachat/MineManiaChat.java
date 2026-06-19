@@ -21,6 +21,13 @@
 package com.github.minemaniauk.minemaniachat;
 
 import com.github.minemaniauk.minemaniachat.commands.*;
+import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordPresence;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.LinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.UnlinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
+import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
@@ -38,30 +45,36 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import net.luckperms.api.LuckPermsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
 
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.3.4"
+        version = "3.4.0"
 )
 public class MineManiaChat {
 
     private static @NotNull MineManiaChat instance;
 
+    private PermissionService permissionService;
     private final @NotNull ProxyServer server;
     private final @NotNull ComponentLogger logger;
     private final @NotNull Configuration configuration;
+    private  final @NotNull Configuration discordConfig;
     private final @NotNull Configuration bannedWords;
+    private final @NotNull Configuration linksConfiguration;
     private @NotNull ChatHandler chatHandler;
     private DataBaseController dbController;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
     private final @NotNull Path dataPath;
+    private DiscordManager discordManager;
+    private LinkStorage linkStorage;
+    private LinkManager linkManager;
 
     @Inject
     public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
@@ -77,10 +90,23 @@ public class MineManiaChat {
                 .setDefaultPath("config.yml");
         this.configuration.load();
 
+        // Set up the discord config file
+        this.discordConfig = ConfigurationFactory.YAML
+                .create(folder.toFile(), "discord")
+                .setDefaultPath("discord.yml");
+        this.discordConfig.load();
+
+        // Set up the banned words config file
         this.bannedWords = ConfigurationFactory.YAML
                 .create(folder.toFile(), "bannedwords")
                 .setDefaultPath("bannedwords.yml");
         this.bannedWords.load();
+
+        // links.yml
+        this.linksConfiguration = ConfigurationFactory.YAML
+                .create(folder.toFile(), "links");
+
+        this.linksConfiguration.load();
 
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
@@ -91,6 +117,16 @@ public class MineManiaChat {
         }
 
         CommandManager cm = getProxyServer().getCommandManager();
+
+        if (discordConfig.getBoolean("enabled")) {
+            this.linkStorage = new LinkStorage();
+            this.linkManager = new LinkManager(linkStorage);
+            this.discordManager = new DiscordManager(discordConfig);
+            cm.register(cm.metaBuilder("mmchatdiscord").build(), new DiscordCommand());
+            cm.register(cm.metaBuilder("mmchatsetdiscordPresence").build(), new DiscordPresence());
+            cm.register(cm.metaBuilder("discordlink").aliases("link").build(), new LinkCommand(this.linkManager));
+            cm.register(cm.metaBuilder("discordunlink").aliases("unlink").build(), new UnlinkCommand(this.linkStorage));
+        }
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
         cm.register(cm.metaBuilder("chatdisable").build(), new ChatDisable());
@@ -113,6 +149,7 @@ public class MineManiaChat {
     @Subscribe
     public void ProxyInitEvent(ProxyInitializeEvent event) {
         this.server.getEventManager().register(this, this.chatHandler);
+        this.permissionService = new PermissionService(LuckPermsProvider.get());
     }
 
     @Subscribe
@@ -126,6 +163,7 @@ public class MineManiaChat {
             sendJoinMessage(event.getPlayer(), true);
         }
         else { sendJoinMessage(event.getPlayer(), false);  }
+        linkStorage.updateMinecraftUsername(event.getPlayer().getUniqueId(), event.getPlayer().getUsername());
     }
 
     @Subscribe
@@ -174,12 +212,35 @@ public class MineManiaChat {
         this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.configuration.load();
         this.bannedWords.load();
+        this.discordConfig.load();
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         if (configuration.getBoolean("database.enabled")){
             this.dbController = new DataBaseController(this.configuration);
         }
+        if (discordConfig.getBoolean("enabled")) {
+            this.discordManager.discordConfig = this.discordConfig;
+        }
         this.server.getEventManager().register(this, this.chatHandler);
     }
+
+    public Configuration getDiscordConfig() { return discordConfig; }
+
+    public Configuration getLinksConfig() {
+        return linksConfiguration;
+    }
+
+    public LinkManager getLinkManager() {
+        return linkManager;
+    }
+
+    public PermissionService getPermissionService() { return permissionService; }
+
+    /**
+     * Used to get the instance of the Discord Handler
+     *
+     * @return The instance of the Discord Handler
+     */
+    public @NotNull DiscordManager getDiscordManager() { return this.discordManager; }
 
     /**
      * Used to get the instance of the Data Manager
