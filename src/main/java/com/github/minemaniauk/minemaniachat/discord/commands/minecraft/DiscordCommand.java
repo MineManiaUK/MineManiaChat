@@ -79,6 +79,6 @@ public class DiscordCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("chat.manage.discord");
+        return invocation.source().hasPermission("chat.discordcommand");
     }
 }

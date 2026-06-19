@@ -93,20 +93,22 @@ public class DiscordManager {
     public void freezeChannel(boolean freeze) {
         String channelId = discordConfig.getString("active-channel-id");
 
+        if (channelId == null || channelId.isBlank()) {
+            MineManiaChat.getInstance().getLogger().error("Cannot freeze/unfreeze Discord channel: active-channel-id is missing.");
+            return;
+        }
+
         TextChannel channel = jda.getTextChannelById(channelId);
+
         if (channel == null) {
-            throw new IllegalStateException("Could not find Discord channel with ID: " + channelId);
+            MineManiaChat.getInstance().getLogger().error("Cannot freeze/unfreeze Discord channel: no channel found for ID {}.", channelId);
+            return;
         }
 
-        String roleId = discordConfig.getString("permissions.role.member.id");
-
-        Role role = jda.getRoleById(roleId);
-        if (role == null) {
-            throw new IllegalStateException("Could not find Discord role with ID: " + roleId);
-        }
+        Role everyoneRole = channel.getGuild().getPublicRole();
 
         if (freeze) {
-            channel.upsertPermissionOverride(role)
+            channel.upsertPermissionOverride(everyoneRole)
                     .deny(Permission.MESSAGE_SEND)
                     .queue();
 
@@ -117,8 +119,8 @@ public class DiscordManager {
 
             channel.sendMessageEmbeds(embed.build()).queue();
         } else {
-            channel.upsertPermissionOverride(role)
-                    .grant(Permission.MESSAGE_SEND)
+            channel.upsertPermissionOverride(everyoneRole)
+                    .clear(Permission.MESSAGE_SEND)
                     .queue();
 
             EmbedBuilder embed = new EmbedBuilder()
