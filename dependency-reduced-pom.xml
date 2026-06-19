@@ -157,6 +157,12 @@
       <version>2.2.2</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>net.luckperms</groupId>
+      <artifactId>api</artifactId>
+      <version>5.5</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <reporting>
     <plugins>

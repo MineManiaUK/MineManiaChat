@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat.commands;
+package com.github.minemaniauk.minemaniachat.discord.commands.minecraft;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;

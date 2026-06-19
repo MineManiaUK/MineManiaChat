@@ -20,16 +20,10 @@
 
 package com.github.minemaniauk.minemaniachat;
 
-import com.github.minemaniauk.minemaniachat.discord.Roles;
-
 public enum SpamFilterResults {
     NONE,
     MIN_TIME,
-    MESSAGE_DENSITY;
-
-    public boolean isAtLeast(Roles requiredRole) {
-        return this.ordinal() <= requiredRole.ordinal();
-    }
+    MESSAGE_DENSITY
 }
 
 

@@ -20,6 +20,9 @@
 
 package com.github.minemaniauk.minemaniachat.discord;
 
+import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordLinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordUnlinkCommand;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -29,6 +32,8 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.awt.*;
@@ -50,7 +55,20 @@ public class DiscordManager {
                         GatewayIntent.GUILD_PRESENCES
                 )
                 .build();
-        jda.addEventListener(new DiscordListener());
+        jda.addEventListener(
+                new DiscordListener(),
+                new DiscordLinkCommand(MineManiaChat.getInstance().getLinkManager()),
+                new DiscordUnlinkCommand()
+        );
+
+        jda.updateCommands()
+                .addCommands(
+                        Commands.slash("link", "Link your Discord account to Minecraft")
+                                .addOption(OptionType.STRING, "code", "Your Minecraft link code", true),
+
+                        Commands.slash("unlink", "Unlink your Discord account from Minecraft")
+                )
+                .queue();
     }
 
     public void forwardInGameMessage(Player sender, String message) {

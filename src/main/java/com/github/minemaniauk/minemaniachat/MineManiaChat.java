@@ -22,6 +22,11 @@ package com.github.minemaniauk.minemaniachat;
 
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.LinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.UnlinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
+import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
@@ -39,6 +44,8 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -52,18 +59,22 @@ public class MineManiaChat {
 
     private static @NotNull MineManiaChat instance;
 
+    private PermissionService permissionService;
     private final @NotNull ProxyServer server;
     private final @NotNull ComponentLogger logger;
     private final @NotNull Configuration configuration;
     private  final @NotNull Configuration discordConfig;
     private final @NotNull Configuration bannedWords;
+    private final @NotNull Configuration linksConfiguration;
     private @NotNull ChatHandler chatHandler;
-    private @NotNull DiscordManager discordManager;
     private DataBaseController dbController;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
     private final @NotNull Path dataPath;
+    private DiscordManager discordManager;
+    private LinkStorage linkStorage;
+    private LinkManager linkManager;
 
     @Inject
     public MineManiaChat(ProxyServer server, @DataDirectory final Path folder, ComponentLogger componentLogger) {
@@ -91,6 +102,12 @@ public class MineManiaChat {
                 .setDefaultPath("bannedwords.yml");
         this.bannedWords.load();
 
+        // links.yml
+        this.linksConfiguration = ConfigurationFactory.YAML
+                .create(folder.toFile(), "links");
+
+        this.linksConfiguration.load();
+
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         this.messageHandler = new MessageHandler();
@@ -99,12 +116,15 @@ public class MineManiaChat {
             this.dbController = new DataBaseController(this.configuration);
         }
 
-
         CommandManager cm = getProxyServer().getCommandManager();
 
         if (discordConfig.getBoolean("enabled")) {
+            this.linkStorage = new LinkStorage();
+            this.linkManager = new LinkManager(linkStorage);
             this.discordManager = new DiscordManager(discordConfig);
             cm.register(cm.metaBuilder("mmchatdiscord").build(), new DiscordCommand());
+            cm.register(cm.metaBuilder("discordlink").aliases("link").build(), new LinkCommand(this.linkManager));
+            cm.register(cm.metaBuilder("discordunlink").aliases("unlink").build(), new UnlinkCommand(this.linkStorage));
         }
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
@@ -128,6 +148,7 @@ public class MineManiaChat {
     @Subscribe
     public void ProxyInitEvent(ProxyInitializeEvent event) {
         this.server.getEventManager().register(this, this.chatHandler);
+        this.permissionService = new PermissionService(LuckPermsProvider.get());
     }
 
     @Subscribe
@@ -141,6 +162,7 @@ public class MineManiaChat {
             sendJoinMessage(event.getPlayer(), true);
         }
         else { sendJoinMessage(event.getPlayer(), false);  }
+        linkStorage.updateMinecraftUsername(event.getPlayer().getUniqueId(), event.getPlayer().getUsername());
     }
 
     @Subscribe
@@ -199,6 +221,18 @@ public class MineManiaChat {
         }
         this.server.getEventManager().register(this, this.chatHandler);
     }
+
+    public Configuration getDiscordConfig() { return discordConfig; }
+
+    public Configuration getLinksConfig() {
+        return linksConfiguration;
+    }
+
+    public LinkManager getLinkManager() {
+        return linkManager;
+    }
+
+    public PermissionService getPermissionService() { return permissionService; }
 
     /**
      * Used to get the instance of the Discord Handler
