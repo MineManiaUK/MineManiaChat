@@ -21,6 +21,8 @@ A chat plugin for velocity.
 - /togglechatalerts or /chatalerts |  Permission: "chat.notify" | Enable or disable receiving chat filter alerts
 - /chat or /c or /talk \<Message\> | Permission: None | Triggers a chat event with a message this allows a workaround for Mojang's age verification
 - /mmchatspamcooldown \<check|reset\> \<player\> | Permisson: "chat.manage.spamcooldown" | Allows staff to check or remove a players spam cooldown
+- /mmchatdiscord \<enable|disable\> | Permission "chat.manage.discord" | Allows staff to enable and disable the discord bridge
+- /mmchatsetdiscordpresence \<playing|streaming|listening|watching|custom|competing|clear\> \<presence text\> | "chat.manage.discordpresence" | Allows user to set the discord bots presence
 
 ## Permissions
 
@@ -38,5 +40,5 @@ A chat plugin for velocity.
 # Post 3.0.0 Warnings
 
 - Proxy and Backend Servers (Any server in velocity.toml) MUST have [SignedVelocity](https://modrinth.com/plugin/signedvelocity) plugin installed
-- MineMania API is no longer used meaning Kerb and Database no longer need to be configured
+- MineMania API is no longer used meaning Kerb no longer need to be configured
 - Config and Banned words are now in separate YAMLs

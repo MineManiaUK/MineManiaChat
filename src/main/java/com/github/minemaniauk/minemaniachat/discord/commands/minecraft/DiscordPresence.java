@@ -30,11 +30,10 @@ import java.util.List;
 public class DiscordPresence implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
-
         String[] args = invocation.arguments();
 
         if (args.length < 1) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /mmchatdiscord <enable|disable>"));
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /mmchatsetdiscordpresence <playing|streaming|listening|watching|custom|competing|clear> <presence text>"));
             return;
         }
 
