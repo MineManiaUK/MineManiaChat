@@ -156,7 +156,7 @@ public class ChatHandler {
             );
 
             if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
-                MineManiaChat.getInstance().getDiscordHandler().forwardInGameMessage(sendingPlayer, event.getMessage());
+                MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
             }
         }
 

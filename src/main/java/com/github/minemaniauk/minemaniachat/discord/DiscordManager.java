@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -37,6 +38,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.awt.*;
+import java.util.Locale;
 
 
 public class DiscordManager {
@@ -69,6 +71,24 @@ public class DiscordManager {
                         Commands.slash("unlink", "Unlink your Discord account from Minecraft")
                 )
                 .queue();
+
+        Object rawType = discordConfig.get("presence.type");
+
+        Activity.ActivityType activityType = Activity.ActivityType.PLAYING;
+
+        if (rawType instanceof String typeName && !typeName.isBlank()) {
+            try {
+                activityType = Activity.ActivityType.valueOf(typeName.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                activityType = Activity.ActivityType.PLAYING;
+            }
+        }
+
+        String activityText = discordConfig.getString("presence.text");
+
+        if (activityType != null && activityText != null) {
+            jda.getPresence().setPresence(Activity.of(activityType, activityText), false);
+        }
     }
 
     public void forwardInGameMessage(Player sender, String message) {
@@ -88,6 +108,14 @@ public class DiscordManager {
                 .setDescription(message);
 
         channel.sendMessageEmbeds(embed.build()).queue();
+    }
+
+    public void setPresence(Activity.ActivityType activityType, String text) {
+        discordConfig.set("presence.type", activityType.toString().toLowerCase());
+        discordConfig.set("presence.text", text);
+        discordConfig.save();
+
+        jda.getPresence().setPresence(Activity.of(activityType, text), false);
     }
 
     public void freezeChannel(boolean freeze) {

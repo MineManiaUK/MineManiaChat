@@ -21,7 +21,7 @@ public class DiscordListener extends ListenerAdapter {
 
         if (!event.getChannel().getId().equals(
                 MineManiaChat.getInstance()
-                        .getDiscordHandler()
+                        .getDiscordManager()
                         .getDiscordConfig()
                         .getString("active-channel-id")
         )) {
@@ -194,7 +194,7 @@ public class DiscordListener extends ListenerAdapter {
             String message
     ) {
         String formattedMessage = MineManiaChat.getInstance()
-                .getDiscordHandler()
+                .getDiscordManager()
                 .getDiscordConfig()
                 .getString("discord-prefix");
 

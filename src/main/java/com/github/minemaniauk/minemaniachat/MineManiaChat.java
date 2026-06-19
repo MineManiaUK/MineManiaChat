@@ -23,6 +23,7 @@ package com.github.minemaniauk.minemaniachat;
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
 import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordPresence;
 import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.LinkCommand;
 import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.UnlinkCommand;
 import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
@@ -44,7 +45,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,6 +123,7 @@ public class MineManiaChat {
             this.linkManager = new LinkManager(linkStorage);
             this.discordManager = new DiscordManager(discordConfig);
             cm.register(cm.metaBuilder("mmchatdiscord").build(), new DiscordCommand());
+            cm.register(cm.metaBuilder("mmchatsetdiscordPresence").build(), new DiscordPresence());
             cm.register(cm.metaBuilder("discordlink").aliases("link").build(), new LinkCommand(this.linkManager));
             cm.register(cm.metaBuilder("discordunlink").aliases("unlink").build(), new UnlinkCommand(this.linkStorage));
         }
@@ -239,7 +240,7 @@ public class MineManiaChat {
      *
      * @return The instance of the Discord Handler
      */
-    public @NotNull DiscordManager getDiscordHandler() { return this.discordManager; }
+    public @NotNull DiscordManager getDiscordManager() { return this.discordManager; }
 
     /**
      * Used to get the instance of the Data Manager

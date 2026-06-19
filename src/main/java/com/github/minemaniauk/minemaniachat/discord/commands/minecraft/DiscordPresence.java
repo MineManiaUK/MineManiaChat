@@ -21,64 +21,77 @@
 package com.github.minemaniauk.minemaniachat.discord.commands.minecraft;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
-import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.command.SimpleCommand;
+import net.dv8tion.jda.api.entities.Activity.ActivityType;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.List;
 
-public class DiscordCommand implements SimpleCommand {
+public class DiscordPresence implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
-        if (invocation.arguments().length < 1) {
+
+        String[] args = invocation.arguments();
+
+        if (args.length < 1) {
             invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /mmchatdiscord <enable|disable>"));
             return;
         }
 
         String arg = invocation.arguments()[0];
-        Configuration config = MineManiaChat.getInstance().getConfig();
+        String text = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+
+        ActivityType activityType = null;
 
         switch (arg){
-            case "enable":
-                config.set("discord-enabled", true);
-                config.save();
-                MineManiaChat.getInstance().getDiscordManager().freezeChannel(false);
-                MineManiaChat.getInstance().reloadConfigs();
-                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Successfully &aenabled &7discord bridge"));
+            case "playing":
+                activityType = ActivityType.PLAYING;
                 break;
-            case "disable":
-                config.set("discord-enabled", false);
-                config.save();
-                MineManiaChat.getInstance().getDiscordManager().freezeChannel(true);
-                MineManiaChat.getInstance().reloadConfigs();
-                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Successfully &cdisabled &7discord bridge"));
+            case "streaming":
+                activityType = ActivityType.STREAMING;
                 break;
-            default:
-                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /mmchatdiscord <enable|disable>"));
+            case "listening":
+                activityType = ActivityType.LISTENING;
+                break;
+            case "watching":
+                activityType = ActivityType.WATCHING;
+                break;
+            case "custom":
+                activityType = ActivityType.CUSTOM_STATUS;
+                break;
+            case "competing":
+                activityType = ActivityType.COMPETING;
                 break;
         }
+
+        MineManiaChat.getInstance().getDiscordManager().setPresence(activityType, text);
+
+        invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &aSuccessfully &7Set the bots discord presence"));
     }
 
     @Override
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
+        List<String> completions = List.of("playing", "streaming", "listening", "watching", "custom", "competing");
 
         if (args.length == 0) {
-            return List.of("enable", "disable");
+            return completions;
         }
 
         if (args.length == 1) {
             String prefix = args[0].toLowerCase();
 
-            return List.of("enable", "disable").stream()
+            return completions.stream()
                     .filter(option -> option.startsWith(prefix))
                     .toList();
         }
+
+
         return List.of();
     }
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("chat.manage.discord");
+        return invocation.source().hasPermission("chat.manage.discordpresence");
     }
 }
