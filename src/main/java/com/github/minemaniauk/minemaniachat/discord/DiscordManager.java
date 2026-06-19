@@ -88,6 +88,7 @@ public class DiscordManager {
 
         if (activityType != null && activityText != null) {
             jda.getPresence().setPresence(Activity.of(activityType, activityText), false);
+            jda.getPresence().setActivity(null);
         }
     }
 
@@ -116,6 +117,13 @@ public class DiscordManager {
         discordConfig.save();
 
         jda.getPresence().setPresence(Activity.of(activityType, text), false);
+    }
+
+    public void ClearPresence() {
+        discordConfig.set("presence", null);
+        discordConfig.save();
+
+        jda.getPresence().setActivity(null);
     }
 
     public void freezeChannel(boolean freeze) {

@@ -62,17 +62,20 @@ public class DiscordPresence implements SimpleCommand {
             case "competing":
                 activityType = ActivityType.COMPETING;
                 break;
+            case "clear":
+                MineManiaChat.getInstance().getDiscordManager().ClearPresence();
+                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &aSuccessfully &ccleared &7the bots discord presence"));
+                return;
         }
 
         MineManiaChat.getInstance().getDiscordManager().setPresence(activityType, text);
-
         invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &aSuccessfully &7Set the bots discord presence"));
     }
 
     @Override
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
-        List<String> completions = List.of("playing", "streaming", "listening", "watching", "custom", "competing");
+        List<String> completions = List.of("playing", "streaming", "listening", "watching", "custom", "competing", "clear");
 
         if (args.length == 0) {
             return completions;
