@@ -26,7 +26,7 @@
 
     <groupId>com.github.minemaniauk</groupId>
     <artifactId>MineManiaChat</artifactId>
-    <version>3.3.4</version>
+    <version>3.4.0</version>
     <packaging>jar</packaging>
 
     <name>MineManiaChat</name>
@@ -85,6 +85,13 @@
             <artifactId>discord-webhook</artifactId>
             <version>1.0.0</version>
         </dependency>
+
+        <dependency>
+        <groupId>net.dv8tion</groupId>
+        <artifactId>JDA</artifactId>
+        <version>6.4.1</version>
+        </dependency>
+
     </dependencies>
 
     <profiles>

@@ -21,6 +21,7 @@
 package com.github.minemaniauk.minemaniachat.commands;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;

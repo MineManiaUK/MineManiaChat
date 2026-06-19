@@ -10,6 +10,8 @@
 # Chat Enabled
 # Only users with permission chat.bypass.disable can chat if this is false
 chat-enabled: true
+# Check discord.yml
+discord-enabled: true
 
 # Clear Chat Lines
 clear-chat-lines: 100

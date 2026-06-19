@@ -21,6 +21,7 @@
 package com.github.minemaniauk.minemaniachat;
 
 import com.github.minemaniauk.minemaniachat.commands.*;
+import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
@@ -41,12 +42,11 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
 
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.3.4"
+        version = "3.4.0"
 )
 public class MineManiaChat {
 
@@ -55,8 +55,10 @@ public class MineManiaChat {
     private final @NotNull ProxyServer server;
     private final @NotNull ComponentLogger logger;
     private final @NotNull Configuration configuration;
+    private  final @NotNull Configuration discordConfig;
     private final @NotNull Configuration bannedWords;
     private @NotNull ChatHandler chatHandler;
+    private @NotNull DiscordManager discordManager;
     private DataBaseController dbController;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
@@ -77,6 +79,13 @@ public class MineManiaChat {
                 .setDefaultPath("config.yml");
         this.configuration.load();
 
+        // Set up the discord config file
+        this.discordConfig = ConfigurationFactory.YAML
+                .create(folder.toFile(), "discord")
+                .setDefaultPath("discord.yml");
+        this.discordConfig.load();
+
+        // Set up the banned words config file
         this.bannedWords = ConfigurationFactory.YAML
                 .create(folder.toFile(), "bannedwords")
                 .setDefaultPath("bannedwords.yml");
@@ -90,7 +99,13 @@ public class MineManiaChat {
             this.dbController = new DataBaseController(this.configuration);
         }
 
+
         CommandManager cm = getProxyServer().getCommandManager();
+
+        if (discordConfig.getBoolean("enabled")) {
+            this.discordManager = new DiscordManager(discordConfig);
+            cm.register(cm.metaBuilder("mmchatdiscord").build(), new DiscordCommand());
+        }
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
         cm.register(cm.metaBuilder("chatdisable").build(), new ChatDisable());
@@ -174,12 +189,23 @@ public class MineManiaChat {
         this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.configuration.load();
         this.bannedWords.load();
+        this.discordConfig.load();
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         if (configuration.getBoolean("database.enabled")){
             this.dbController = new DataBaseController(this.configuration);
         }
+        if (discordConfig.getBoolean("enabled")) {
+            this.discordManager.discordConfig = this.discordConfig;
+        }
         this.server.getEventManager().register(this, this.chatHandler);
     }
+
+    /**
+     * Used to get the instance of the Discord Handler
+     *
+     * @return The instance of the Discord Handler
+     */
+    public @NotNull DiscordManager getDiscordHandler() { return this.discordManager; }
 
     /**
      * Used to get the instance of the Data Manager

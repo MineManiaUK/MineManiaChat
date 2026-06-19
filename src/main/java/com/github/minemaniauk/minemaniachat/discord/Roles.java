@@ -18,18 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.minemaniauk.minemaniachat;
+package com.github.minemaniauk.minemaniachat.discord;
 
-import com.github.minemaniauk.minemaniachat.discord.Roles;
-
-public enum SpamFilterResults {
-    NONE,
-    MIN_TIME,
-    MESSAGE_DENSITY;
+public enum Roles {
+    OWNER,
+    ADMIN,
+    HELPER,
+    MEMBER;
 
     public boolean isAtLeast(Roles requiredRole) {
         return this.ordinal() <= requiredRole.ordinal();
     }
 }
-
-

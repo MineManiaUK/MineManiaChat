@@ -1,0 +1,27 @@
+enabled: false
+
+discord-bot-token:
+
+active-channel-id:
+
+discord-prefix:
+
+# Role IDs chooses the chat roles and commands usage
+permissions:
+  role:
+    owner:
+      id:
+      prefix:
+      postfix:
+
+    admin:
+      id:
+      prefix:
+      postfix:
+
+    helper:
+      id:
+      prefix:
+      postfix:
+    member:
+      id:

@@ -1,0 +1,130 @@
+/*
+ * MineManiaChat
+ * Used for interacting with the database and message broker.
+ *
+ * Copyright (C) 2023  MineManiaUK Staff
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.github.minemaniauk.minemaniachat.discord;
+
+import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
+import com.velocitypowered.api.proxy.Player;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+
+import java.awt.*;
+
+
+public class DiscordManager {
+
+    private JDA jda;
+    public Configuration discordConfig;
+
+    public DiscordManager(Configuration discordConfig) {
+        this.discordConfig = discordConfig;
+
+        jda = JDABuilder.createDefault(discordConfig.getString("discord-bot-token"))
+                .enableIntents(
+                        GatewayIntent.MESSAGE_CONTENT,
+                        GatewayIntent.GUILD_MEMBERS,
+                        GatewayIntent.GUILD_MODERATION,
+                        GatewayIntent.GUILD_PRESENCES
+                )
+                .build();
+        jda.addEventListener(new DiscordListener());
+    }
+
+    public void forwardInGameMessage(Player sender, String message) {
+        message = escapeLegacyFormatting(message);
+
+        String channelId = discordConfig.getString("active-channel-id");
+
+        MessageChannel channel = jda.getChannelById(MessageChannel.class, channelId);
+
+        if (channel == null) {
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle(sender.getUsername())
+                .setThumbnail("https://mc-heads.net/avatar/" + sender.getUsername())
+                .setDescription(message);
+
+        channel.sendMessageEmbeds(embed.build()).queue();
+    }
+
+    public void freezeChannel(boolean freeze) {
+        String channelId = discordConfig.getString("active-channel-id");
+
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel == null) {
+            throw new IllegalStateException("Could not find Discord channel with ID: " + channelId);
+        }
+
+        String roleId = discordConfig.getString("permissions.role.member.id");
+
+        Role role = jda.getRoleById(roleId);
+        if (role == null) {
+            throw new IllegalStateException("Could not find Discord role with ID: " + roleId);
+        }
+
+        if (freeze) {
+            channel.upsertPermissionOverride(role)
+                    .deny(Permission.MESSAGE_SEND)
+                    .queue();
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Discord bridge is disabled")
+                    .setDescription("The Discord bridge is currently disabled.")
+                    .setColor(Color.RED);
+
+            channel.sendMessageEmbeds(embed.build()).queue();
+        } else {
+            channel.upsertPermissionOverride(role)
+                    .grant(Permission.MESSAGE_SEND)
+                    .queue();
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Discord bridge now enabled")
+                    .setDescription("The Discord bridge is now enabled.")
+                    .setColor(Color.GREEN);
+
+            channel.sendMessageEmbeds(embed.build()).queue();
+        }
+    }
+
+    public JDA getJda() {
+        return this.jda;
+    }
+
+    public Configuration getDiscordConfig() {
+        return this.discordConfig;
+    }
+
+    public void Shutdown(){
+        jda.shutdownNow();
+    }
+
+    private String escapeLegacyFormatting(String message) {
+        return message.replace("&", "＆").replace("§", "§\u200B");
+    }
+}
