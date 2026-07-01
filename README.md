@@ -23,6 +23,9 @@ A chat plugin for velocity.
 - /mmchatspamcooldown \<check|reset\> \<player\> | Permisson: "chat.manage.spamcooldown" | Allows staff to check or remove a players spam cooldown
 - /mmchatdiscord \<enable|disable\> | Permission "chat.manage.discord" | Allows staff to enable and disable the discord bridge
 - /mmchatsetdiscordpresence \<playing|streaming|listening|watching|custom|competing|clear\> \<presence text\> | "chat.manage.discordpresence" | Allows user to set the discord bots presence
+- /discordlink or /link | Allows a user to link a discord account to their Minecraft account
+- /discordunlink or /unlink | Allows a user to remove an existing link between a discord account and their Minecraft account
+- /discordadminunlink or /aunlink \<player\> | Permission "chat.manage.discord" | Allows staff to remove a link between a discord and a Minecraft account
 
 ## Permissions
 
