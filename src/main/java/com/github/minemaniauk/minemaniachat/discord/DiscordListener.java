@@ -3,6 +3,8 @@ package com.github.minemaniauk.minemaniachat.discord;
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.proxy.Player;
+import io.github.sbcomputerteh.chatwatch.cwvelocity.CWVelocity;
+import io.github.sbcomputerteh.chatwatch.cwvelocity.packet.ChatMessagePacket;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -69,6 +71,17 @@ public class DiscordListener extends ListenerAdapter {
 
         if (minecraftUsername == null || minecraftUsername.isBlank()) {
             minecraftUsername = minecraftUuid.toString();
+        }
+
+        if (MineManiaChat.getInstance().getCw() != null){
+            ChatMessagePacket packet = new ChatMessagePacket(
+                    minecraftUuid,
+                    minecraftUsername,
+                    "via discord",
+                    message
+            );
+
+            MineManiaChat.getInstance().getCw().sendToServer(packet);
         }
 
         handleDiscordMessage(event, member, minecraftUuid, minecraftUsername, message);

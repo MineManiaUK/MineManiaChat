@@ -41,6 +41,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import io.github.sbcomputerteh.chatwatch.cwvelocity.CWVelocity;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.luckperms.api.LuckPermsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.1"
+        version = "3.4.2"
 )
 public class MineManiaChat {
 
@@ -69,6 +70,7 @@ public class MineManiaChat {
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
     private final @NotNull Path dataPath;
+    private CWVelocity cw;
     private DiscordManager discordManager;
     private LinkStorage linkStorage;
     private LinkManager linkManager;
@@ -104,6 +106,19 @@ public class MineManiaChat {
                 .create(folder.toFile(), "links");
 
         this.linksConfiguration.load();
+
+        this.server.getPluginManager().getPlugin("cwvelocity")
+                .flatMap(pluginContainer -> pluginContainer.getInstance())
+                .ifPresentOrElse(
+                        instance -> {
+                            if (instance instanceof CWVelocity cwVelocity) {
+                                this.cw = cwVelocity;
+                            } else {
+                                logger.warn("cwvelocity plugin instance is not a CWVelocity instance");
+                            }
+                        },
+                        () -> logger.warn("Could not find cwvelocity installed")
+                );
 
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
@@ -219,6 +234,10 @@ public class MineManiaChat {
             this.discordManager.discordConfig = this.discordConfig;
         }
         this.server.getEventManager().register(this, this.chatHandler);
+    }
+
+    public CWVelocity getCw(){
+        return this.cw;
     }
 
     public Configuration getDiscordConfig() { return discordConfig; }
