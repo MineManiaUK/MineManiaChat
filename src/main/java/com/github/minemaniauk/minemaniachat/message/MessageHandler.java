@@ -47,7 +47,7 @@ public class MessageHandler {
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
             if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
                 new User(from).sendMessage("&c&l> &cSomething went wrong.");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message);
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message);
                 return;
             }
         }
@@ -55,7 +55,7 @@ public class MessageHandler {
         if (!from.hasPermission("chat.bypass.filter.url")) {
             if (MineManiaChat.getInstance().getChatHandler().URL_PATTERN.matcher(message).find()) {
                 new User(from).sendMessage("&c&l> &cSomething went wrong.");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " with a URL!", "URL Alert", message);
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with a URL!", "URL Alert", message);
                 return;
             }
         }
@@ -63,7 +63,7 @@ public class MessageHandler {
         if (!from.hasPermission("chat.bypass.private-message.disablement")) {
             if (!MineManiaChat.getInstance().getDataManager().CanPlayerPm(from)) {
                 new User(from).sendMessage("&c&l> &cSomething went wrong.");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but has private messaging disabled", "PM disabled alert", message);
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " but has private messaging disabled", "PM disabled alert", message);
                 return;
             }
         }
@@ -74,7 +74,7 @@ public class MessageHandler {
                 if (MineManiaChat.getInstance().getChatHandler().playerCooldowns.containsKey(from) && MineManiaChat.getInstance().getConfig().getBoolean("spam-detection.message-density.enabled")) {
                     if (Instant.now().isBefore(MineManiaChat.getInstance().getChatHandler().playerCooldowns.get(from))) {
                         new User(from).sendMessage("&c&l> &cYou are sending messages too fast. Try again soon");
-                        MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " but is spam cool downed!", "Spam cooldown Alert", message);
+                        MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " but is spam cool downed!", "Spam cooldown Alert", message);
                         return;
                     } else {
                         MineManiaChat.getInstance().getChatHandler().playerCooldowns.remove(from);
@@ -89,7 +89,7 @@ public class MessageHandler {
                     }
 
                     new User(from).sendMessage("&c&l> &cYou are sending messages too fast");
-                    MineManiaChat.getInstance().getChatHandler().notifyStaff(from, "Sent a private message to " + to.getUsername() + " and Triggered the spam filter!", "Spam Filter Alert", message);
+                    MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " and Triggered the spam filter!", "Spam Filter Alert", message);
                     return;
                 }
 

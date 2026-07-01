@@ -35,11 +35,6 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
 
-        if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
-            event.getMessage().delete().queue();
-            return;
-        }
-
         if (!MineManiaChat.getInstance().getLinkManager().isDiscordLinked(member.getId())) {
             event.getMessage().delete().queue();
 
@@ -92,6 +87,10 @@ public class DiscordListener extends ListenerAdapter {
                 .matcher(message)
                 .find();
 
+        boolean hasBannedWords = MineManiaChat.getInstance()
+                .getChatHandler()
+                .containsBannedWords(message);
+
         CompletableFuture<Boolean> urlBypassFuture;
 
         if (hasUrl) {
@@ -102,12 +101,26 @@ public class DiscordListener extends ListenerAdapter {
             urlBypassFuture = CompletableFuture.completedFuture(true);
         }
 
+        CompletableFuture<Boolean> bannedWordsBypassFuture;
+
+        if (hasBannedWords) {
+            bannedWordsBypassFuture = MineManiaChat.getInstance()
+                    .getPermissionService()
+                    .hasPermission(minecraftUuid, "chat.bypass.filter.banned-words");
+        } else {
+            bannedWordsBypassFuture = CompletableFuture.completedFuture(true);
+        }
+
         CompletableFuture<Boolean> disableBypassFuture = MineManiaChat.getInstance()
                 .getPermissionService()
                 .hasPermission(minecraftUuid, "chat.bypass.disable");
 
-        urlBypassFuture
-                .thenCombine(disableBypassFuture, (hasUrlBypass, hasDisableBypass) -> {
+        CompletableFuture.allOf(urlBypassFuture, bannedWordsBypassFuture, disableBypassFuture)
+                .thenApply(ignored -> {
+                    boolean hasUrlBypass = urlBypassFuture.join();
+                    boolean hasBannedWordsBypass = bannedWordsBypassFuture.join();
+                    boolean hasDisableBypass = disableBypassFuture.join();
+
                     if (hasUrl && !hasUrlBypass) {
                         event.getMessage().delete().queue();
 
@@ -117,6 +130,13 @@ public class DiscordListener extends ListenerAdapter {
                                 .setColor(Color.RED);
 
                         event.getMessage().replyEmbeds(embed.build()).queue();
+                        MineManiaChat.getInstance().getChatHandler().notifyStaff(member.getUser().getName(), "Sent Message with a URL!(via the discord bridge)", "URL Alert", message);
+                        return false;
+                    }
+
+                    if (hasBannedWords && !hasBannedWordsBypass) {
+                        event.getMessage().delete().queue();
+                        MineManiaChat.getInstance().getChatHandler().notifyStaff(member.getUser().getName(),  "Sent Message with Banned words! (via the discord bridge)", "Banned word Alert", message);
                         return false;
                     }
 
@@ -160,15 +180,12 @@ public class DiscordListener extends ListenerAdapter {
                             .thenAccept(chatReadyMessage -> {
                                 for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
                                     p.sendMessage(
-                                            LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                                    chatReadyMessage
-                                            )
+                                            LegacyComponentSerializer.legacyAmpersand().deserialize(chatReadyMessage)
                                     );
                                 }
 
                                 MineManiaChat.getInstance().getLogger().info(
-                                        LegacyComponentSerializer.legacyAmpersand()
-                                                .deserialize(chatReadyMessage)
+                                        LegacyComponentSerializer.legacyAmpersand().deserialize(chatReadyMessage)
                                 );
                             });
                 })

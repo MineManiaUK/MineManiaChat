@@ -93,7 +93,7 @@ public class ChatHandler {
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
                 if (this.containsBannedWords(event.getMessage())) {
                     new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
-                    notifyStaff(sendingPlayer, "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
+                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
                     return;
                 }
             }
@@ -102,7 +102,7 @@ public class ChatHandler {
             if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
                 if (URL_PATTERN.matcher(event.getMessage()).find()) {
                     new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
-                    notifyStaff(sendingPlayer, "Sent Message with a URL!", "URL Alert", event.getMessage());
+                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with a URL!", "URL Alert", event.getMessage());
                     return;
                 }
             }
@@ -126,11 +126,11 @@ public class ChatHandler {
                     if (checkResult != SpamFilterResults.NONE){
                         if (checkResult == SpamFilterResults.MESSAGE_DENSITY){
                             playerCooldowns.put(sendingPlayer, Instant.now().plusSeconds(configuration.getLong("spam-detection.message-density.violation-cooldown")));
-                            notifyStaff(sendingPlayer, "Is spam cool downed!", "Spam Filter Cooldown Alert", event.getMessage());
+                            notifyStaff(sendingPlayer.getUsername(), "Is spam cool downed!", "Spam Filter Cooldown Alert", event.getMessage());
                         }
 
                         new User(sendingPlayer).sendMessage("&c&l> &cYou are sending messages too fast");
-                        notifyStaff(sendingPlayer, "Triggered the spam filter!", "Spam Filter Alert", event.getMessage());
+                        notifyStaff(sendingPlayer.getUsername(), "Triggered the spam filter!", "Spam Filter Alert", event.getMessage());
                         return;
                     }
                 }
@@ -313,13 +313,13 @@ public class ChatHandler {
         return time;
     }
 
-    public void notifyStaff(Player player, String staffMessage, String discordTitle ,String message){
+    public void notifyStaff(String name, String staffMessage, String discordTitle ,String message){
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
         for (Player p : allPlayers){
             if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)){
                 User u = new User(p);
-                u.sendMessage("&cPlayer " + player.getUsername() + " " + staffMessage + "\n" + message);
+                u.sendMessage("&cPlayer " + name + " " + staffMessage + "\n" + message);
             }
         }
 
@@ -341,7 +341,7 @@ public class ChatHandler {
         LocalDateTime timeNow = LocalDateTime.now();
         String formatedTimeNow = timeNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         List<Field> fields = new ArrayList<>();
-        fields.add(new Field("Player", player.getUsername(), false));
+        fields.add(new Field("Player", name, false));
 
         Embed embed = new Embed();
         embed.setColor(0xff0000);

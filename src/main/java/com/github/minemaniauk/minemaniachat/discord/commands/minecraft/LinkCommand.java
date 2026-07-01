@@ -42,7 +42,7 @@ public class LinkCommand implements SimpleCommand {
         }
 
         if (linkManager.isMinecraftLinked(player.getUniqueId())) {
-            player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cYour Minecraft account is already linked."));
+            player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cA discord account is already linked to this Minecraft account."));
             return;
         }
 

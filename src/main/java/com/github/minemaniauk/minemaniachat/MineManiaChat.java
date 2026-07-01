@@ -22,10 +22,7 @@ package com.github.minemaniauk.minemaniachat;
 
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
-import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordCommand;
-import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.DiscordPresence;
-import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.LinkCommand;
-import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.UnlinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.*;
 import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
 import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
@@ -53,7 +50,7 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.0"
+        version = "3.4.1"
 )
 public class MineManiaChat {
 
@@ -126,6 +123,7 @@ public class MineManiaChat {
             cm.register(cm.metaBuilder("mmchatsetdiscordPresence").build(), new DiscordPresence());
             cm.register(cm.metaBuilder("discordlink").aliases("link").build(), new LinkCommand(this.linkManager));
             cm.register(cm.metaBuilder("discordunlink").aliases("unlink").build(), new UnlinkCommand(this.linkStorage));
+            cm.register(cm.metaBuilder("discordadminunlink").aliases("aunlink").build(), new AdminUnlinkCommand(this.linkStorage));
         }
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
