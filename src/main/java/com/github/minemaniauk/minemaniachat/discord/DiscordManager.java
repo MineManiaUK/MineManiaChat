@@ -22,6 +22,7 @@ package com.github.minemaniauk.minemaniachat.discord;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordLinkCommand;
+import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordPlayersCommand;
 import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordUnlinkCommand;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.proxy.Player;
@@ -60,7 +61,8 @@ public class DiscordManager {
         jda.addEventListener(
                 new DiscordListener(),
                 new DiscordLinkCommand(MineManiaChat.getInstance().getLinkManager()),
-                new DiscordUnlinkCommand()
+                new DiscordUnlinkCommand(),
+                new DiscordPlayersCommand()
         );
 
         jda.updateCommands()
@@ -68,9 +70,14 @@ public class DiscordManager {
                         Commands.slash("link", "Link your Discord account to Minecraft")
                                 .addOption(OptionType.STRING, "code", "Your Minecraft link code", true),
 
-                        Commands.slash("unlink", "Unlink your Discord account from Minecraft")
+                        Commands.slash("unlink", "Unlink your Discord account from Minecraft"),
+
+                        Commands.slash("players", "Replies with a list of online players")
                 )
-                .queue();
+                .queue(
+                        success -> System.out.println("Registered global slash commands."),
+                        error -> error.printStackTrace()
+                );
 
         Object rawType = discordConfig.get("presence.type");
 
@@ -166,6 +173,42 @@ public class DiscordManager {
 
             channel.sendMessageEmbeds(embed.build()).queue();
         }
+    }
+
+    public void sendJoinMessage(Player player) {
+        String channelId = discordConfig.getString("active-channel-id");
+
+        MessageChannel channel = jda.getChannelById(MessageChannel.class, channelId);
+
+        if (channel == null) {
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("Player joined")
+                .setThumbnail("https://mc-heads.net/avatar/" + player.getUsername())
+                .setDescription(player.getUsername() + " Joined the server")
+                .setColor(Color.GREEN);
+
+        channel.sendMessageEmbeds(embed.build()).queue();
+    }
+
+    public void sendLeaveMessage(Player player) {
+        String channelId = discordConfig.getString("active-channel-id");
+
+        MessageChannel channel = jda.getChannelById(MessageChannel.class, channelId);
+
+        if (channel == null) {
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("Player left")
+                .setThumbnail("https://mc-heads.net/avatar/" + player.getUsername())
+                .setDescription(player.getUsername() + " Left the server")
+                .setColor(Color.RED);
+
+        channel.sendMessageEmbeds(embed.build()).queue();
     }
 
     public JDA getJda() {

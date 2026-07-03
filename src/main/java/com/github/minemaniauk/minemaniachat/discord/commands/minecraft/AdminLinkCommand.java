@@ -21,25 +21,35 @@
 package com.github.minemaniauk.minemaniachat.discord.commands.minecraft;
 
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
-import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
+import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
-public class AdminUnlinkCommand implements SimpleCommand {
+public class AdminLinkCommand implements SimpleCommand {
 
-    private final LinkStorage linkStorage;
+    private final LinkManager linkManager;
 
-    public AdminUnlinkCommand(LinkStorage linkStorage) {
-        this.linkStorage = linkStorage;
+    public AdminLinkCommand(LinkManager linkManager) {
+        this.linkManager = linkManager;
     }
 
     @Override
     public void execute(Invocation invocation) {
+
+        if (!(invocation.source() instanceof Player)) {
+            invocation.source().sendMessage(Component.text("Only players can use this command."));
+            return;
+        }
+
         if (invocation.arguments().length < 1) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /discordadminunlink <player>"));
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /discordadminlink <player>"));
             return;
         }
 
@@ -52,18 +62,17 @@ public class AdminUnlinkCommand implements SimpleCommand {
 
         Player player = optionalPlayer.get();
 
-        UUID minecraftUuid = player.getUniqueId();
-
-        String discordUserId = linkStorage.getDiscordId(minecraftUuid);
-
-        if (discordUserId == null) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &7The target Minecraft account &cis not linked &7to a Discord account."));
+        if (linkManager.isMinecraftLinked(player.getUniqueId())) {
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cA discord account is already linked to this Minecraft account."));
             return;
         }
 
-        linkStorage.removeLink(minecraftUuid, discordUserId);
+        String code = linkManager.createLinkCode(player);
 
-        invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cThe target Minecraft account has been unlinked from Discord."));
+        player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &fAn admin has activated a discord link for you"));
+        player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &fYour Discord link code is: &b&l" + code));
+        player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &fGo to Discord and run: &l/link " + code));
+
     }
 
     @Override

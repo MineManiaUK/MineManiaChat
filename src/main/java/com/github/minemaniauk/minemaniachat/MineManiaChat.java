@@ -51,7 +51,7 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.2"
+        version = "3.4.4"
 )
 public class MineManiaChat {
 
@@ -139,6 +139,7 @@ public class MineManiaChat {
             cm.register(cm.metaBuilder("discordlink").aliases("link").build(), new LinkCommand(this.linkManager));
             cm.register(cm.metaBuilder("discordunlink").aliases("unlink").build(), new UnlinkCommand(this.linkStorage));
             cm.register(cm.metaBuilder("discordadminunlink").aliases("aunlink").build(), new AdminUnlinkCommand(this.linkStorage));
+            cm.register(cm.metaBuilder("discordadminlink").aliases("alink").build(), new AdminLinkCommand(this.linkManager));
         }
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
@@ -187,30 +188,35 @@ public class MineManiaChat {
         else { sendLeaveMessage(event.getPlayer(), false);  }
     }
 
-    private void sendJoinMessage(Player player, boolean staffOnly){
+    private void sendJoinMessage(Player player, boolean staffOnly) {
+        if (!staffOnly) {
+            getDiscordManager().sendJoinMessage(player);
+        }
+
         for (Player p : this.getProxyServer().getAllPlayers()) {
-            if (!staffOnly){
+            if (!staffOnly) {
                 new User(p).sendMessage("&a+ &7" + player.getUsername());
-            }
-            else {
-                if (p.hasPermission("chat.joinmessage.alert")){
+            } else {
+                if (p.hasPermission("chat.joinmessage.alert")) {
                     new User(p).sendMessage("&a+ &7" + player.getUsername());
                 }
             }
-
         }
     }
-    private void sendLeaveMessage(Player player, boolean staffOnly){
+
+    private void sendLeaveMessage(Player player, boolean staffOnly) {
+        if (!staffOnly) {
+            getDiscordManager().sendLeaveMessage(player);
+        }
+
         for (Player p : this.getProxyServer().getAllPlayers()) {
-            if (!staffOnly){
+            if (!staffOnly) {
                 new User(p).sendMessage("&c- &7" + player.getUsername());
-            }
-            else {
-                if (p.hasPermission("chat.joinmessage.alert")){
+            } else {
+                if (p.hasPermission("chat.joinmessage.alert")) {
                     new User(p).sendMessage("&c- &7" + player.getUsername());
                 }
             }
-
         }
     }
 
