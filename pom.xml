@@ -26,7 +26,7 @@
 
     <groupId>com.github.minemaniauk</groupId>
     <artifactId>MineManiaChat</artifactId>
-    <version>3.4.4</version>
+    <version>3.4.5</version>
     <packaging>jar</packaging>
 
     <name>MineManiaChat</name>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
-            <version>3.4.0-SNAPSHOT</version>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -199,7 +199,7 @@
                         <path>
                             <groupId>com.velocitypowered</groupId>
                             <artifactId>velocity-api</artifactId>
-                            <version>3.4.0-SNAPSHOT</version>
+                            <version>4.0.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
