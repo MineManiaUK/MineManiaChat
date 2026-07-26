@@ -81,7 +81,8 @@ public class DiscordListener extends ListenerAdapter {
                     message
             );
 
-            MineManiaChat.getInstance().getCw().sendToServer(packet);
+
+            MineManiaChat.getInstance().getCw().getPlugin().sendToServer(packet);
         }
 
         handleDiscordMessage(event, member, minecraftUuid, minecraftUsername, message);

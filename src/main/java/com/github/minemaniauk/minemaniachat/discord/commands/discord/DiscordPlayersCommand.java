@@ -20,15 +20,19 @@
 
 package com.github.minemaniauk.minemaniachat.discord.commands.discord;
 
-import com.github.minemaniauk.minemaniachat.MineManiaChat;
+import com.github.minemaniauk.minemaniachat.commands.ListCommmand;
 import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.luckperms.api.model.group.Group;
 
 import java.awt.*;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DiscordPlayersCommand extends ListenerAdapter {
@@ -39,14 +43,7 @@ public class DiscordPlayersCommand extends ListenerAdapter {
             return;
         }
 
-        Collection<Player> players = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
-
-        String playerList = players.stream()
-                .filter(player -> !MineManiaChat.getInstance()
-                        .getDbController()
-                        .isPlayerVanished(player))
-                .map(player -> "`" + player.getUsername() + "`")
-                .collect(Collectors.joining("\n"));
+        String playerList = getPlayerList();
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Online Players")
@@ -55,4 +52,33 @@ public class DiscordPlayersCommand extends ListenerAdapter {
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
+    private String getPlayerList() {
+        HashMap<Group, List<Player>> groupPlayerMap = ListCommmand.getGroupPlayerMap();
+        StringBuilder output = new StringBuilder();
+
+        for (Map.Entry<Group, List<Player>> entry : groupPlayerMap.entrySet()) {
+            Group group = entry.getKey();
+
+            String prefix = group.getCachedData()
+                    .getMetaData()
+                    .getPrefix();
+
+            prefix = PlainTextComponentSerializer.plainText().serialize(
+                    LegacyComponentSerializer.legacyAmpersand().deserialize(prefix)
+            );
+
+            output.append(prefix)
+                    .append(":\n ");
+
+            String playerNames = entry.getValue().stream()
+                    .map(player -> "`" + player.getUsername() + "`")
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .collect(Collectors.joining("\n"));
+
+            output.append(playerNames)
+                    .append("\n\n");
+        }
+
+        return output.toString();
+    }
 }

@@ -95,7 +95,6 @@ public class DiscordManager {
 
         if (activityType != null && activityText != null) {
             jda.getPresence().setPresence(Activity.of(activityType, activityText), false);
-            jda.getPresence().setActivity(null);
         }
     }
 

@@ -37,6 +37,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -51,7 +52,10 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.4"
+        version = "3.4.6",
+        dependencies = {
+                @Dependency(id = "cwvelocity", optional = true)
+        }
 )
 public class MineManiaChat {
 
@@ -70,7 +74,7 @@ public class MineManiaChat {
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
     private final @NotNull Path dataPath;
-    private CWVelocity cw;
+    private CWVelocityIntegration cw;
     private DiscordManager discordManager;
     private LinkStorage linkStorage;
     private LinkManager linkManager;
@@ -112,7 +116,7 @@ public class MineManiaChat {
                 .ifPresentOrElse(
                         instance -> {
                             if (instance instanceof CWVelocity cwVelocity) {
-                                this.cw = cwVelocity;
+                                this.cw = new CWVelocityIntegration(cwVelocity);
                             } else {
                                 logger.warn("cwvelocity plugin instance is not a CWVelocity instance");
                             }
@@ -158,6 +162,7 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("togglechatalerts").aliases("chatalerts").build(), new Alerts());
         cm.register(cm.metaBuilder("chat").aliases("c", "talk").build(), new Chat());
         cm.register(cm.metaBuilder("mmchatspamcooldown").build(), new SpamCooldown());
+        cm.register(cm.metaBuilder("list").aliases("listplayers").build(), new ListCommmand());
     }
 
     @Subscribe
@@ -242,7 +247,7 @@ public class MineManiaChat {
         this.server.getEventManager().register(this, this.chatHandler);
     }
 
-    public CWVelocity getCw(){
+    public CWVelocityIntegration getCw(){
         return this.cw;
     }
 

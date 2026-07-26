@@ -90,22 +90,7 @@ public class SpamCooldown implements SimpleCommand {
         }
 
         if (args.length == 2) {
-            Collection<Player> players = MineManiaChat.getInstance()
-                    .getProxyServer()
-                    .getAllPlayers();
-
-            List<String> completions = new ArrayList<>();
-            boolean canSeeVanished = invocation.source().hasPermission("pv.see");
-
-            for (Player player : players) {
-                boolean vanished = MineManiaChat.getInstance()
-                        .getDbController()
-                        .isPlayerVanished(player);
-
-                if (canSeeVanished || !vanished) {
-                    completions.add(player.getUsername());
-                }
-            }
+            List<String> completions = MineManiaChat.getInstance().getProxyServer().getAllPlayers().stream().map(Player::getUsername).toList();
 
             String prefix = args[1].toLowerCase();
 

@@ -20,6 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat.message;
 
+import com.github.minemaniauk.minemaniachat.DataBaseController;
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.github.minemaniauk.minemaniachat.SpamFilterResults;
 import com.github.minemaniauk.minemaniachat.User;
@@ -32,8 +33,12 @@ import java.time.Instant;
 public class MessageHandler {
 
     public void sendPlayerMessage(Player from, Player to, String message) {
+        DataBaseController dbController = MineManiaChat.getInstance().getDbController();
 
-        if (MineManiaChat.getInstance().getDbController().isPlayerMuted(from)) {
+        boolean muted = dbController != null
+                && dbController.isPlayerMuted(from);
+
+        if (muted) {
             return;
         }
 

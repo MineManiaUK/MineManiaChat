@@ -20,6 +20,7 @@
 
 package com.github.minemaniauk.minemaniachat.message.commands;
 
+import com.github.minemaniauk.minemaniachat.DataBaseController;
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
@@ -70,21 +71,20 @@ public class Message implements SimpleCommand {
 
     @Override
     public List<String> suggest(Invocation invocation) {
-
         if (invocation.arguments().length > 1) return List.of();
 
-        Collection<Player> players = MineManiaChat.getInstance()
-                .getProxyServer()
-                .getAllPlayers();
-
         List<String> completions = new ArrayList<>();
-        for (Player player : players) {
-            if (!invocation.source().hasPermission("pv.see")) {
-                if (!MineManiaChat.getInstance().getDbController().isPlayerVanished(player)){
-                    completions.add(player.getUsername());
-                }
-            }
-            else {
+        DataBaseController dbController = MineManiaChat.getInstance().getDbController();
+        boolean canSeeVanished = invocation.source().hasPermission("pv.see");
+
+        for (Player player : MineManiaChat.getInstance()
+                .getProxyServer()
+                .getAllPlayers()) {
+
+            boolean vanished = dbController != null
+                    && dbController.isPlayerVanished(player);
+
+            if (canSeeVanished || !vanished) {
                 completions.add(player.getUsername());
             }
         }
