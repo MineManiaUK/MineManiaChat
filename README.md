@@ -27,6 +27,7 @@ A chat plugin for velocity.
 - /discordunlink or /unlink | Allows a user to remove an existing link between a discord account and their Minecraft account
 - /discordadminunlink or /aunlink \<player\> | Permission "chat.manage.discord" | Allows staff to remove a link between a discord and a Minecraft account
 - /discordadminlink or /alink  \<player\> | Permission "chat.manage.discord" | Allows staff to send a link code to a player (For use if a player can not execute commands)
+- /list or /playerlist | Sends the executor a list of visable online players
 
 ## Discord Bot commands
 - /link \<code\> | Allows a user to complete a link with the code provided to the server
