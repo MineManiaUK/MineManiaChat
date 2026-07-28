@@ -52,7 +52,7 @@ public class ChatHandler {
     private final @NotNull Configuration configuration;
     private final @NotNull Configuration bannedWords;
     public final Pattern URL_PATTERN = Pattern.compile(
-            "(?i)\\b(?:https?://|www\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)+\\b"
+            "(?i)\\b(?:https?://|www\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.[a-z]{2,24}(?:/[^\\s]*)?"
     );
 
     private final HashMap<Player, List<Instant>> playerMessageTimes = new HashMap<>();

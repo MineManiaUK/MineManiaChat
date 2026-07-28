@@ -30,7 +30,6 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.luckperms.api.model.group.Group;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,7 +52,7 @@ public class DiscordPlayersCommand extends ListenerAdapter {
     }
 
     private String getPlayerList() {
-        HashMap<Group, List<Player>> groupPlayerMap = ListCommmand.getGroupPlayerMap();
+        Map<Group, List<Player>> groupPlayerMap = ListCommmand.getGroupPlayerMap();
         StringBuilder output = new StringBuilder();
 
         for (Map.Entry<Group, List<Player>> entry : groupPlayerMap.entrySet()) {

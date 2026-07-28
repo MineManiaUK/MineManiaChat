@@ -30,17 +30,14 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ListCommmand implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         StringBuilder output = new StringBuilder("&f&lPlayers:\n\n");
-        HashMap<Group, List<Player>> groupPlayerMap = getGroupPlayerMap();
+        Map<Group, List<Player>> groupPlayerMap = getGroupPlayerMap();
 
         for (Map.Entry<Group, List<Player>> entry : groupPlayerMap.entrySet()) {
             Group group = entry.getKey();
@@ -54,40 +51,73 @@ public class ListCommmand implements SimpleCommand {
             }
 
             output.append(prefix)
-                    .append("&7: &f");
+                    .append("\n");
 
-            String playerNames = entry.getValue().stream()
+            entry.getValue().stream()
                     .map(Player::getUsername)
                     .sorted(String.CASE_INSENSITIVE_ORDER)
-                    .collect(Collectors.joining("&f, "));
+                    .forEach(playerName -> output
+                            .append("&7- &f")
+                            .append(playerName)
+                            .append("\n"));
 
-            output.append(playerNames)
-                    .append("\n\n");
+            output.append("\n");
         }
 
         invocation.source().sendMessage(
                 LegacyComponentSerializer.legacyAmpersand()
-                        .deserialize(output.toString()));
+                        .deserialize(output.toString())
+        );
     }
 
-    public static HashMap<Group, List<Player>> getGroupPlayerMap() {
-        LuckPerms lp = LuckPermsProvider.get();
-        HashMap<Group, List<Player>> groupPlayerMap = new HashMap<>();
-        DataBaseController dbController = MineManiaChat.getInstance().getDbController();
+    public static Map<Group, List<Player>> getGroupPlayerMap() {
+        LuckPerms luckPerms = LuckPermsProvider.get();
+        DataBaseController dbController =
+                MineManiaChat.getInstance().getDbController();
 
-        for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+        Map<Group, List<Player>> unsortedGroups = new HashMap<>();
+
+        for (Player player : MineManiaChat.getInstance()
+                .getProxyServer()
+                .getAllPlayers()) {
+
             boolean vanished = dbController != null
-                    && dbController.isPlayerVanished(p);
-            if (!vanished){
-                User lpUser = lp.getUserManager().getUser(p.getUniqueId());
-                Group userGroup = lp.getGroupManager().getGroup(lpUser.getPrimaryGroup());
+                    && dbController.isPlayerVanished(player);
 
-                groupPlayerMap
-                        .computeIfAbsent(userGroup, ignored -> new ArrayList<>())
-                        .add(p);
+            if (vanished) {
+                continue;
             }
+
+            User user = luckPerms.getUserManager()
+                    .getUser(player.getUniqueId());
+
+            if (user == null) {
+                continue;
+            }
+
+            Group group = luckPerms.getGroupManager()
+                    .getGroup(user.getPrimaryGroup());
+
+            if (group == null) {
+                continue;
+            }
+
+            unsortedGroups
+                    .computeIfAbsent(group, ignored -> new ArrayList<>())
+                    .add(player);
         }
 
-        return groupPlayerMap;
+        return unsortedGroups.entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt(
+                        (Map.Entry<Group, List<Player>> entry) ->
+                                entry.getKey().getWeight().orElse(0)
+                ).reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
     }
 }
