@@ -22,6 +22,7 @@ package com.github.minemaniauk.minemaniachat;
 
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
+import com.github.minemaniauk.minemaniachat.discord.EventTypes;
 import com.github.minemaniauk.minemaniachat.discord.commands.minecraft.*;
 import com.github.minemaniauk.minemaniachat.discord.link.LinkManager;
 import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
@@ -34,7 +35,9 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
+import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
@@ -177,12 +180,20 @@ public class MineManiaChat {
     }
 
     @Subscribe
-    public void onPlayerJoinEvent(PlayerChooseInitialServerEvent event) {
+    public void onPlayerJoinEvent(PostLoginEvent event) {
         if (event.getPlayer().hasPermission("chat.joinmessage.disable")){
             sendJoinMessage(event.getPlayer(), true);
         }
         else { sendJoinMessage(event.getPlayer(), false);  }
         linkStorage.updateMinecraftUsername(event.getPlayer().getUniqueId(), event.getPlayer().getUsername());
+        discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_JOIN, null);
+    }
+
+    @Subscribe
+    public void onPlayerSwitchServer(ServerConnectedEvent event) {
+        if (event.getPreviousServer().isEmpty()) {
+            discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_SWITCH_SERVER, event.getServer());
+        }
     }
 
     @Subscribe
@@ -191,6 +202,7 @@ public class MineManiaChat {
             sendLeaveMessage(event.getPlayer(), true);
         }
         else { sendLeaveMessage(event.getPlayer(), false);  }
+        discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_LEAVE, null);
     }
 
     private void sendJoinMessage(Player player, boolean staffOnly) {

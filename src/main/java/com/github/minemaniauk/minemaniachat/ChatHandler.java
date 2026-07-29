@@ -149,11 +149,15 @@ public class ChatHandler {
                 );
             }
 
+            MineManiaChat.getInstance().getDiscordManager().sendMessageDiscordLogWebhook(sendingPlayer, event.getMessage());
+
             MineManiaChat.getInstance().getLogger().info(
                     LegacyComponentSerializer.legacyAmpersand().deserialize(
                             formattedMessage
                     )
             );
+
+
 
             if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
                 MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());

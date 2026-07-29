@@ -20,12 +20,18 @@
 
 package com.github.minemaniauk.minemaniachat.discord;
 
+import com.eduardomcb.discord.webhook.WebhookClient;
+import com.eduardomcb.discord.webhook.WebhookManager;
+import com.eduardomcb.discord.webhook.models.Embed;
+import com.eduardomcb.discord.webhook.models.Image;
+import com.eduardomcb.discord.webhook.models.Message;
 import com.github.minemaniauk.minemaniachat.MineManiaChat;
 import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordLinkCommand;
 import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordPlayersCommand;
 import com.github.minemaniauk.minemaniachat.discord.commands.discord.DiscordUnlinkCommand;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -115,6 +121,76 @@ public class DiscordManager {
                 .setDescription(message);
 
         channel.sendMessageEmbeds(embed.build()).queue();
+    }
+
+    public void sendMessageDiscordLogWebhook(Player player, String message) {
+        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-url");
+
+        if (webhookUrl.isEmpty()) return;
+
+        WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl);
+
+        webhookManager.setListener(new WebhookClient.Callback() {
+            @Override
+            public void onSuccess(String response) { }
+
+            @Override
+            public void onFailure(int statusCode, String errorMessage) {
+                MineManiaChat.getInstance().getLogger().error("Could not send discord webhook message " + "Code: " + statusCode + " error: " + errorMessage);
+            }
+        });
+
+        Message discordMessage = new Message()
+                .setAvatarUrl("https://mc-heads.net/avatar/" + player.getUsername())
+                .setUsername(player.getUsername())
+                .setContent(message);
+
+        webhookManager.setMessage(discordMessage).exec();
+    }
+
+    public void sendEventDiscordLogWebhook(Player player, EventTypes type, RegisteredServer server) {
+        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-url");
+
+        if (webhookUrl.isEmpty()) return;
+
+        WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl);
+
+        webhookManager.setListener(new WebhookClient.Callback() {
+            @Override
+            public void onSuccess(String response) { }
+
+            @Override
+            public void onFailure(int statusCode, String errorMessage) {
+                MineManiaChat.getInstance().getLogger().error("Could not send discord webhook message " + "Code: " + statusCode + " error: " + errorMessage);
+            }
+        });
+
+        Message discordMessage = new Message()
+                .setUsername("Server");
+
+        Embed embed = new Embed();
+        embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+        switch (type){
+            case PLAYER_JOIN -> {
+                embed.setDescription("%s Joined the server".formatted(player.getUsername()));
+                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setColor(0x00FF00);
+            }
+            case PLAYER_SWITCH_SERVER -> {
+                embed.setDescription("%s switched to server %s".formatted(player.getUsername(), server.getServerInfo().getName()));
+                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setColor(0xFFFF00);
+            }
+            case PLAYER_LEAVE -> {
+                embed.setDescription("%s left the server".formatted(player.getUsername()));
+                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setColor(0xFF0000);
+            }
+        }
+
+        webhookManager.setMessage(discordMessage)
+                .setEmbeds(new Embed[] {embed})
+                .exec();
     }
 
     public void setPresence(Activity.ActivityType activityType, String text) {

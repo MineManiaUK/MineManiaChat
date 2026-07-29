@@ -20,6 +20,9 @@ clear-chat-lines: 100
 webhook-enabled:
 webhook-url:
 
+# Logging webhook
+webhook-logging-url:
+
 spam-detection:
   enabled: true
   store-last: 25

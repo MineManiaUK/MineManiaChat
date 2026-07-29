@@ -48,7 +48,7 @@ public class ServerMessage implements SimpleCommand {
             Optional<Player> recipient = MineManiaChat.getInstance().getProxyServer().getPlayer(targetName);
 
 
-            if (!recipient.isPresent()) {
+            if (recipient.isEmpty()) {
                 invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cAn error occurred"));
                 MineManiaChat.getInstance().getLogger().warn("Could not get recipient");
                 return;
