@@ -56,8 +56,8 @@ public class DataBaseController {
                 ConfigurationSection lbSection = config.getSection("database.litebans");
 
                 String url = lbSection.getString("url");
-                String user = lbSection.getString("user");;
-                String password = lbSection.getString("password");;
+                String user = lbSection.getString("user");
+                String password = lbSection.getString("password");
 
                 lbConn = DriverManager.getConnection(url, user, password);
             }
@@ -76,8 +76,8 @@ public class DataBaseController {
                 ConfigurationSection pvSection = config.getSection("database.premium-vanish");
 
                 String url = pvSection.getString("url");
-                String user = pvSection.getString("user");;
-                String password = pvSection.getString("password");;
+                String user = pvSection.getString("user");
+                String password = pvSection.getString("password");
 
                 pvConn = DriverManager.getConnection(url, user, password);
             }
