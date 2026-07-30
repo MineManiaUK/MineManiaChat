@@ -116,32 +116,6 @@ public class MineManiaChat {
 
         this.linksConfiguration.load();
 
-        this.server.getPluginManager().getPlugin("minemaniavelocity")
-                .flatMap(pluginContainer -> pluginContainer.getInstance())
-                .ifPresentOrElse(
-                        instance -> {
-                            if (instance instanceof MineManiaVelocity mineManiaVelocity) {
-                                this.mineManiaVelocity = new MineManiaVelocityIntegration(mineManiaVelocity);
-                            } else {
-                                logger.warn("minemaniavelocity plugin instance is not a MineManiaVelocity instance");
-                            }
-                        },
-                        () -> logger.warn("Could not find minemaniavelocity installed")
-                );
-
-        this.server.getPluginManager().getPlugin("cwvelocity")
-                .flatMap(pluginContainer -> pluginContainer.getInstance())
-                .ifPresentOrElse(
-                        instance -> {
-                            if (instance instanceof CWVelocity cwVelocity) {
-                                this.cw = new CWVelocityIntegration(cwVelocity);
-                            } else {
-                                logger.warn("cwvelocity plugin instance is not a CWVelocity instance");
-                            }
-                        },
-                        () -> logger.warn("Could not find cwvelocity installed")
-                );
-
         // Create a new chat handler.
         this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
         this.messageHandler = new MessageHandler();
@@ -187,6 +161,32 @@ public class MineManiaChat {
     public void ProxyInitEvent(ProxyInitializeEvent event) {
         this.server.getEventManager().register(this, this.chatHandler);
         this.permissionService = new PermissionService(LuckPermsProvider.get());
+
+        this.server.getPluginManager().getPlugin("minemaniavelocity")
+                .flatMap(pluginContainer -> pluginContainer.getInstance())
+                .ifPresentOrElse(
+                        instance -> {
+                            if (instance instanceof MineManiaVelocity mineManiaVelocity) {
+                                this.mineManiaVelocity = new MineManiaVelocityIntegration(mineManiaVelocity);
+                            } else {
+                                logger.warn("minemaniavelocity plugin instance is not a MineManiaVelocity instance");
+                            }
+                        },
+                        () -> logger.warn("Could not find minemaniavelocity installed")
+                );
+
+        this.server.getPluginManager().getPlugin("cwvelocity")
+                .flatMap(pluginContainer -> pluginContainer.getInstance())
+                .ifPresentOrElse(
+                        instance -> {
+                            if (instance instanceof CWVelocity cwVelocity) {
+                                this.cw = new CWVelocityIntegration(cwVelocity);
+                            } else {
+                                logger.warn("cwvelocity plugin instance is not a CWVelocity instance");
+                            }
+                        },
+                        () -> logger.warn("Could not find cwvelocity installed")
+                );
     }
 
     @Subscribe
@@ -238,16 +238,18 @@ public class MineManiaChat {
 
     private void sendLeaveMessage(Player player, boolean staffOnly) {
         String message = "&c- &7" + player.getUsername();
-        if (mineManiaVelocity.getPlugin().getWhitelistManager().check(player)) {
+        if (!mineManiaVelocity.getPlugin().getWhitelistManager().check(player)) {
             staffOnly = true;
             message = "&c(Not whitelisted) " + message;
+        }
+        else {
+            discordManager.sendEventDiscordLogWebhook(player, EventTypes.PLAYER_LEAVE, null);
         }
 
         if (!staffOnly) {
             getDiscordManager().sendLeaveMessage(player);
         }
 
-        discordManager.sendEventDiscordLogWebhook(player, EventTypes.PLAYER_LEAVE, null);
 
         for (Player p : this.getProxyServer().getAllPlayers()) {
             if (!staffOnly) {
