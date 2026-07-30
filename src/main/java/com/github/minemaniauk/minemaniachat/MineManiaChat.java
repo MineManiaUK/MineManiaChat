@@ -29,6 +29,7 @@ import com.github.minemaniauk.minemaniachat.discord.link.LinkStorage;
 import com.github.minemaniauk.minemaniachat.message.DataManager;
 import com.github.minemaniauk.minemaniachat.message.MessageHandler;
 import com.github.minemaniauk.minemaniachat.message.commands.*;
+import com.github.minemaniauk.velocity.minemaniavelocity.MineManiaVelocity;
 import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.google.inject.Inject;
@@ -78,6 +79,7 @@ public class MineManiaChat {
     private final @NotNull Path playerDataPath;
     private final @NotNull Path dataPath;
     private CWVelocityIntegration cw;
+    private MineManiaVelocityIntegration mineManiaVelocity;
     private DiscordManager discordManager;
     private LinkStorage linkStorage;
     private LinkManager linkManager;
@@ -113,6 +115,19 @@ public class MineManiaChat {
                 .create(folder.toFile(), "links");
 
         this.linksConfiguration.load();
+
+        this.server.getPluginManager().getPlugin("minemaniavelocity")
+                .flatMap(pluginContainer -> pluginContainer.getInstance())
+                .ifPresentOrElse(
+                        instance -> {
+                            if (instance instanceof MineManiaVelocity mineManiaVelocity) {
+                                this.mineManiaVelocity = new MineManiaVelocityIntegration(mineManiaVelocity);
+                            } else {
+                                logger.warn("minemaniavelocity plugin instance is not a MineManiaVelocity instance");
+                            }
+                        },
+                        () -> logger.warn("Could not find minemaniavelocity installed")
+                );
 
         this.server.getPluginManager().getPlugin("cwvelocity")
                 .flatMap(pluginContainer -> pluginContainer.getInstance())
@@ -186,12 +201,11 @@ public class MineManiaChat {
         }
         else { sendJoinMessage(event.getPlayer(), false);  }
         linkStorage.updateMinecraftUsername(event.getPlayer().getUniqueId(), event.getPlayer().getUsername());
-        discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_JOIN, null);
     }
 
     @Subscribe
     public void onPlayerSwitchServer(ServerConnectedEvent event) {
-        if (event.getPreviousServer().isEmpty()) {
+        if (event.getPreviousServer().isPresent()) {
             discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_SWITCH_SERVER, event.getServer());
         }
     }
@@ -202,7 +216,6 @@ public class MineManiaChat {
             sendLeaveMessage(event.getPlayer(), true);
         }
         else { sendLeaveMessage(event.getPlayer(), false);  }
-        discordManager.sendEventDiscordLogWebhook(event.getPlayer(), EventTypes.PLAYER_LEAVE, null);
     }
 
     private void sendJoinMessage(Player player, boolean staffOnly) {
@@ -210,28 +223,38 @@ public class MineManiaChat {
             getDiscordManager().sendJoinMessage(player);
         }
 
+        discordManager.sendEventDiscordLogWebhook(player, EventTypes.PLAYER_JOIN, null);
+
         for (Player p : this.getProxyServer().getAllPlayers()) {
             if (!staffOnly) {
                 new User(p).sendMessage("&a+ &7" + player.getUsername());
             } else {
                 if (p.hasPermission("chat.joinmessage.alert")) {
-                    new User(p).sendMessage("&a+ &7" + player.getUsername());
+                        new User(p).sendMessage("&a+ &7" + player.getUsername());
                 }
             }
         }
     }
 
     private void sendLeaveMessage(Player player, boolean staffOnly) {
+        String message = "&c- &7" + player.getUsername();
+        if (mineManiaVelocity.getPlugin().getWhitelistManager().check(player)) {
+            staffOnly = true;
+            message = "&c(Not whitelisted) " + message;
+        }
+
         if (!staffOnly) {
             getDiscordManager().sendLeaveMessage(player);
         }
 
+        discordManager.sendEventDiscordLogWebhook(player, EventTypes.PLAYER_LEAVE, null);
+
         for (Player p : this.getProxyServer().getAllPlayers()) {
             if (!staffOnly) {
-                new User(p).sendMessage("&c- &7" + player.getUsername());
+                new User(p).sendMessage(message);
             } else {
                 if (p.hasPermission("chat.joinmessage.alert")) {
-                    new User(p).sendMessage("&c- &7" + player.getUsername());
+                    new User(p).sendMessage(message);
                 }
             }
         }
@@ -262,6 +285,8 @@ public class MineManiaChat {
     public CWVelocityIntegration getCw(){
         return this.cw;
     }
+
+    public MineManiaVelocityIntegration getMineManiaVelocity() { return this.mineManiaVelocity; }
 
     public Configuration getDiscordConfig() { return discordConfig; }
 

@@ -22,6 +22,7 @@ package com.github.minemaniauk.minemaniachat.discord;
 
 import com.eduardomcb.discord.webhook.WebhookClient;
 import com.eduardomcb.discord.webhook.WebhookManager;
+import com.eduardomcb.discord.webhook.models.Author;
 import com.eduardomcb.discord.webhook.models.Embed;
 import com.eduardomcb.discord.webhook.models.Image;
 import com.eduardomcb.discord.webhook.models.Message;
@@ -124,7 +125,7 @@ public class DiscordManager {
     }
 
     public void sendMessageDiscordLogWebhook(Player player, String message) {
-        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-url");
+        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-logging-url");
 
         if (webhookUrl.isEmpty()) return;
 
@@ -149,7 +150,7 @@ public class DiscordManager {
     }
 
     public void sendEventDiscordLogWebhook(Player player, EventTypes type, RegisteredServer server) {
-        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-url");
+        String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-logging-url");
 
         if (webhookUrl.isEmpty()) return;
 
@@ -169,21 +170,29 @@ public class DiscordManager {
                 .setUsername("Server");
 
         Embed embed = new Embed();
-        embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
         switch (type){
             case PLAYER_JOIN -> {
-                embed.setDescription("%s Joined the server".formatted(player.getUsername()));
-                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setAuthor(new Author(
+                                "%s Joined the server".formatted(player.getUsername()),
+                        null,
+                        "https://mc-heads.net/avatar/" + player.getUsername()
+                ));
                 embed.setColor(0x00FF00);
             }
             case PLAYER_SWITCH_SERVER -> {
-                embed.setDescription("%s switched to server %s".formatted(player.getUsername(), server.getServerInfo().getName()));
-                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setAuthor(new Author(
+                        "%s switched to server %s".formatted(player.getUsername(), server.getServerInfo().getName()),
+                        null,
+                        "https://mc-heads.net/avatar/" + player.getUsername()
+                ));
                 embed.setColor(0xFFFF00);
             }
             case PLAYER_LEAVE -> {
-                embed.setDescription("%s left the server".formatted(player.getUsername()));
-                embed.setThumbnail(new Image("https://mc-heads.net/avatar/" + player.getUsername()));
+                embed.setAuthor(new Author(
+                        "%s left the server".formatted(player.getUsername()),
+                        null,
+                        "https://mc-heads.net/avatar/" + player.getUsername()
+                ));
                 embed.setColor(0xFF0000);
             }
         }

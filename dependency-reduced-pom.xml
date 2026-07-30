@@ -4,7 +4,7 @@
   <groupId>com.github.minemaniauk</groupId>
   <artifactId>MineManiaChat</artifactId>
   <name>MineManiaChat</name>
-  <version>3.4.9</version>
+  <version>3.5.1</version>
   <build>
     <resources>
       <resource>
@@ -161,6 +161,12 @@
       <groupId>io.github.sbcomputerteh.chatwatch.cwvelocity</groupId>
       <artifactId>CWVelocity</artifactId>
       <version>1.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.minemaniauk.Velocity</groupId>
+      <artifactId>MineManiaVelocity</artifactId>
+      <version>2.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
