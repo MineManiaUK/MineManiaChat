@@ -54,11 +54,19 @@ public class ListCommmand implements SimpleCommand {
                     .append("\n");
 
             entry.getValue().stream()
-                    .map(Player::getUsername)
-                    .sorted(String.CASE_INSENSITIVE_ORDER)
-                    .forEach(playerName -> output
+                    .map(player -> Map.entry(
+                            player.getUsername(),
+                            player.getCurrentServer()
+                                    .map(server -> server.getServerInfo().getName())
+                                    .orElse("Unknown")
+                    ))
+                    .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                    .forEach(player -> output
                             .append("&7- &f")
-                            .append(playerName)
+                            .append(player.getKey())
+                            .append(" &7[&f")
+                            .append(player.getValue())
+                            .append("&7]")
                             .append("\n"));
 
             output.append("\n");
