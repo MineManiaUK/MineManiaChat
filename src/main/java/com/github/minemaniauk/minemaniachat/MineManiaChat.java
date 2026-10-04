@@ -20,6 +20,10 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutAdminCommand;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChat;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChatManager;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutCommand;
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
 import com.github.minemaniauk.minemaniachat.discord.EventTypes;
@@ -74,6 +78,7 @@ public class MineManiaChat {
     private final @NotNull Configuration linksConfiguration;
     private @NotNull ChatHandler chatHandler;
     private DataBaseController dbController;
+    private @NotNull BreakoutChatManager breakoutChatManager;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
@@ -155,6 +160,8 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("chat").aliases("c", "talk").build(), new Chat());
         cm.register(cm.metaBuilder("mmchatspamcooldown").build(), new SpamCooldown());
         cm.register(cm.metaBuilder("list").aliases("listplayers").build(), new ListCommmand());
+        cm.register(cm.metaBuilder("breakout").build(), new BreakoutCommand());
+        cm.register(cm.metaBuilder("breakouta").build(), new BreakoutAdminCommand());
     }
 
     @Subscribe
