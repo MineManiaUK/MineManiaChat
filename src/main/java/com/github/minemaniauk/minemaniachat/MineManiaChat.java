@@ -56,7 +56,7 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.6",
+        version = "3.6.0",
         dependencies = {
                 @Dependency(id = "cwvelocity", optional = true)
         }
