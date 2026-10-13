@@ -26,6 +26,8 @@ import com.eduardomcb.discord.webhook.WebhookManager;
 import com.eduardomcb.discord.webhook.models.Embed;
 import com.eduardomcb.discord.webhook.models.Field;
 import com.eduardomcb.discord.webhook.models.Message;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChat;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChatManager;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
@@ -141,27 +143,58 @@ public class ChatHandler {
 
             String formattedMessage = this.formatMessage(event.getMessage(), sendingPlayer);
 
-            for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
-                p.sendMessage(
+            BreakoutChat breakoutChat = BreakoutChatManager.getBreakoutChat(sendingPlayer);
+
+            if (breakoutChat != null) {
+                breakoutChat.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(formattedMessage));
+
+                MineManiaChat.getInstance()
+                        .getDiscordManager()
+                        .sendMessageDiscordLogWebhook(
+                                sendingPlayer,
+                                "**[Breakout] (" + breakoutChat.name + ")** " + event.getMessage()
+                        );
+
+                MineManiaChat.getInstance()
+                        .getLogger()
+                        .info(
+                                LegacyComponentSerializer.legacyAmpersand()
+                                        .deserialize(
+                                                "&7(&a" + breakoutChat.getName() + "&7) "
+                                                        + formattedMessage
+                                        )
+                        );
+
+            }
+            else {
+                for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+                    p.sendMessage(
+                            LegacyComponentSerializer.legacyAmpersand().deserialize(
+                                    formattedMessage
+                            )
+                    );
+                }
+
+                MineManiaChat.getInstance().getDiscordManager().sendMessageDiscordLogWebhook(sendingPlayer, event.getMessage());
+
+                MineManiaChat.getInstance().getLogger().info(
                         LegacyComponentSerializer.legacyAmpersand().deserialize(
                                 formattedMessage
                         )
                 );
+
+                if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
+                    MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
+                }
             }
 
-            MineManiaChat.getInstance().getDiscordManager().sendMessageDiscordLogWebhook(sendingPlayer, event.getMessage());
-
-            MineManiaChat.getInstance().getLogger().info(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize(
-                            formattedMessage
-                    )
-            );
 
 
 
-            if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
-                MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
-            }
+
+
+
+
         }
 
 

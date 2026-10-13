@@ -127,7 +127,7 @@ public class DiscordManager {
     public void sendMessageDiscordLogWebhook(Player player, String message) {
         String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-logging-url");
 
-        if (webhookUrl.isEmpty()) return;
+        if (webhookUrl == null) return;
 
         WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl);
 
@@ -152,7 +152,7 @@ public class DiscordManager {
     public void sendEventDiscordLogWebhook(Player player, EventTypes type, RegisteredServer server) {
         String webhookUrl = MineManiaChat.getInstance().getConfig().getString("webhook-logging-url");
 
-        if (webhookUrl.isEmpty()) return;
+        if (webhookUrl == null) return;
 
         WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl);
 
