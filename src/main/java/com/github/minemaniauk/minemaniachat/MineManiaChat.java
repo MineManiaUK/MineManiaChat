@@ -198,7 +198,9 @@ public class MineManiaChat {
 
     @Subscribe
     public void OnShutdown(ProxyShutdownEvent event){
-        dbController.close();
+        if (dbController != null) {
+            dbController.close();
+        }
     }
 
     @Subscribe
