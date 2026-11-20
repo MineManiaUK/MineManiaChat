@@ -62,6 +62,10 @@ public class DiscordPlayersCommand extends ListenerAdapter {
                     .getMetaData()
                     .getPrefix();
 
+            if (prefix == null) {
+                prefix = group.getName();
+            }
+
             prefix = PlainTextComponentSerializer.plainText().serialize(
                     LegacyComponentSerializer.legacyAmpersand().deserialize(prefix)
             );
@@ -70,7 +74,9 @@ public class DiscordPlayersCommand extends ListenerAdapter {
                     .append(":\n ");
 
             String playerNames = entry.getValue().stream()
-                    .map(player -> "`" + player.getUsername() + "`")
+                    .map(player -> "`" + player.getUsername() + "` [" + player.getCurrentServer()
+                            .map(server -> server.getServerInfo().getName())
+                            .orElse("Unknown") + "]")
                     .sorted(String.CASE_INSENSITIVE_ORDER)
                     .collect(Collectors.joining("\n"));
 

@@ -32,7 +32,7 @@ A chat plugin for velocity.
 ## Discord Bot commands
 - /link \<code\> | Allows a user to complete a link with the code provided to the server
 - /unlink | Allow a user to remove an existing link from their discord account
-- /players | Replies with a list of online players
+- /players | Replies with a list of visible online players and their current servers, grouped by rank
 
 ## Permissions
 
