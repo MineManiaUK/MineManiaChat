@@ -219,6 +219,7 @@ public class MineManiaChat {
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
+        BreakoutChatManager.detachPlayer(event.getPlayer());
         if (event.getPlayer().hasPermission("chat.joinmessage.disable")){
             sendLeaveMessage(event.getPlayer(), true);
         }

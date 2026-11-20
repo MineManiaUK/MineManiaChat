@@ -26,17 +26,25 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BreakoutChatManager {
 
-    public static List<BreakoutChat> breakoutChats = new ArrayList<>();
+    public static final List<BreakoutChat> breakoutChats = new CopyOnWriteArrayList<>();
 
-    public static void openNewChat(Player creator, Player member, boolean silent, boolean allowMemberLeave) {
-        BreakoutChat chat = new BreakoutChat(creator, member, silent, allowMemberLeave);
+    public static synchronized void openNewChat(Player creator, Player member, boolean silent, boolean locked) {
+        BreakoutChat chat = new BreakoutChat(creator, member, silent, locked);
+        String baseName = chat.name;
+        int suffix = 2;
+        while (getBreakoutChat(chat.name) != null) {
+            chat.name = baseName + "-" + suffix++;
+        }
+        detachPlayer(creator);
+        detachPlayer(member);
         breakoutChats.add(chat);
         creator.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Opened new breakout chat &f" + chat.name));
         if (!silent) {
-            if (allowMemberLeave) {
+            if (!locked) {
                 member.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&a&l> &aYou have been moved into a breakout chat.  Use command /breakout leave to return to main chat"));
             }
             else {
@@ -51,7 +59,7 @@ public class BreakoutChatManager {
         }
     }
 
-    public static void closeBreakoutChat(BreakoutChat chat) {
+    public static synchronized void closeBreakoutChat(BreakoutChat chat) {
         List<Player> players = chat.members;
         for (Player p : players) {
             if (chat.silent) {
@@ -67,17 +75,14 @@ public class BreakoutChatManager {
         breakoutChats.remove(chat);
     }
 
-    public static void addToBreakoutChat(Player player, BreakoutChat chat) {
+    public static synchronized void addToBreakoutChat(Player player, BreakoutChat chat) {
         if (chat.members.contains(player)) return;
 
-        BreakoutChat currentBreakoutChat = getBreakoutChat(player);
-        if (currentBreakoutChat != null) {
-            chat.members.remove(player);
-        }
+        detachPlayer(player);
 
         chat.members.add(player);
         if (!chat.silent) {
-            if (chat.allowMemberLeave) {
+            if (!chat.locked) {
                 player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&a&l> &aYou have been moved into a breakout chat.  Use command /breakout leave to return to main chat"));
             }
             else {
@@ -86,37 +91,38 @@ public class BreakoutChatManager {
         }
     }
 
-    public static void removeFromBreakoutChat(Player player) {
+    public static synchronized void removeFromBreakoutChat(Player player) {
         BreakoutChat chat = getBreakoutChat(player);
 
         if (chat == null) return;
 
-        chat.members.remove(player);
+        detachPlayer(player);
         if (!chat.silent) {
             player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&a&l> &aYou have been moved to the main chat."));
         }
-        if (chat.members.isEmpty()) {
-            closeBreakoutChat(chat);
-        }
     }
 
-    public static void joinBreakoutChat(Player player, BreakoutChat chat) {
+    public static synchronized void joinBreakoutChat(Player player, BreakoutChat chat) {
         BreakoutChat currentChat = getBreakoutChat(player);
-        if (currentChat != null) {
-            leaveBreakoutChat(player);
+        if (currentChat == chat) return;
+        if (currentChat != null && currentChat.locked && !player.hasPermission("chat.breakout.leave")) {
+            player.sendPlainMessage("You cannot leave your locked breakout chat.");
+            return;
         }
+        detachPlayer(player);
         chat.members.add(player);
         player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7You have &ajoined &7breakout chat &f" + chat.name));
     }
 
-    public static void leaveBreakoutChat(Player player) {
+    public static synchronized void leaveBreakoutChat(Player player) {
         BreakoutChat chat = getBreakoutChat(player);
 
         if (chat == null) return;
 
-        if (!chat.allowMemberLeave)
-            if (!player.hasPermission("chat.breakout.leave"))
-                return;
+        if (chat.locked && !player.hasPermission("chat.breakout.leave")) {
+            player.sendPlainMessage("You cannot leave your locked breakout chat.");
+            return;
+        }
 
         chat.members.remove(player);
         if (chat.members.isEmpty()) {
@@ -125,28 +131,43 @@ public class BreakoutChatManager {
         player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7You have &cleft &7breakout chat &f" + chat.name));
     }
 
-    public static void enableBreakoutChat(BreakoutChat chat) {
+    public static synchronized void detachPlayer(Player player) {
+        for (BreakoutChat chat : new ArrayList<>(breakoutChats)) {
+            if (chat.members.remove(player) && chat.members.isEmpty()) {
+                closeBreakoutChat(chat);
+            }
+        }
+    }
+
+    public static synchronized boolean renameChat(BreakoutChat chat, String name) {
+        BreakoutChat existing = getBreakoutChat(name);
+        if (name.equalsIgnoreCase("main") || (existing != null && existing != chat)) return false;
+        chat.name = name;
+        return true;
+    }
+
+    public static synchronized void enableBreakoutChat(BreakoutChat chat) {
         chat.enabled = true;
         for (Player p : chat.members) {
             p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7The breakout chat you are in has been &are-enabled"));
         }
     }
 
-    public static void disableBreakoutChat(BreakoutChat chat) {
+    public static synchronized void disableBreakoutChat(BreakoutChat chat) {
         chat.enabled = false;
         for (Player p : chat.members) {
             p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7The breakout chat you are in has been &cpaused"));
         }
     }
 
-    public static BreakoutChat getBreakoutChat(String name) {
+    public static synchronized BreakoutChat getBreakoutChat(String name) {
         return breakoutChats.stream()
-                .filter(c -> c.name.equals(name))
+                .filter(c -> c.name.equalsIgnoreCase(name))
                 .findFirst()
                 .orElse(null);
     }
 
-    public static BreakoutChat getBreakoutChat(Player player) {
+    public static synchronized BreakoutChat getBreakoutChat(Player player) {
         for (BreakoutChat chat : breakoutChats) {
             if (chat.members.contains(player)) {
                 return chat;

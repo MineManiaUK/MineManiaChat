@@ -28,9 +28,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class BreakoutAdminCommand implements SimpleCommand {
@@ -84,7 +82,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
             return;
         }
 
-        if (chatName.equals("main")) {
+        if (chatName.equalsIgnoreCase("main")) {
             BreakoutChatManager.removeFromBreakoutChat(player);
             invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Moved &f" + player.getUsername() + " &7to &fMain"));
             return;
@@ -110,18 +108,21 @@ public class BreakoutAdminCommand implements SimpleCommand {
             String arg = args[1];
             BreakoutChat chat = BreakoutChatManager.getBreakoutChat(arg);
 
+            if (chat == null) {
+                invocation.source().sendPlainMessage("Breakout chat " + arg + " does not exist");
+                return;
+            }
             invocation.source().sendMessage(Component.text("Players in " + chat.name + ":").decorate(TextDecoration.BOLD));
 
             for (Player p : chat.members) {
                 invocation.source().sendPlainMessage(p.getUsername());
-                return;
             }
 
-            invocation.source().sendPlainMessage("No players in chat");
+            if (chat.members.isEmpty()) invocation.source().sendPlainMessage("No players in chat");
             return;
         }
 
-        invocation.source().sendMessage(Component.text("Breakout chats:").decorate(TextDecoration.BOLD));
+        invocation.source().sendMessage(Component.text("Open breakout chats (" + BreakoutChatManager.breakoutChats.size() + "):").decorate(TextDecoration.BOLD));
 
         if (BreakoutChatManager.breakoutChats.isEmpty()) {
             invocation.source().sendPlainMessage("No open breakout chats");
@@ -134,17 +135,17 @@ public class BreakoutAdminCommand implements SimpleCommand {
     }
 
     private void handleOpen(Invocation invocation, String[] args) {
-        // /breakouta open <player> <silent> <allowLeave>
+        // /breakouta open <player> [silent] [locked]
 
         if (invocation.source() instanceof Player executor) {
-            if (args.length != 4) {
-                invocation.source().sendPlainMessage("Usage: /breakouta open <player> <silent> <allowLeave>");
+            if (args.length < 2 || args.length > 4) {
+                invocation.source().sendPlainMessage("Usage: /breakouta open <player> [silent] [locked]");
                 return;
             }
 
             String playerName = args[1];
-            boolean silent = Boolean.parseBoolean(args[2]);
-            boolean allowLeave = Boolean.parseBoolean(args[3]);
+            boolean silent = args.length < 3 || Boolean.parseBoolean(args[2]);
+            boolean locked = args.length < 4 || Boolean.parseBoolean(args[3]);
 
             Player player = MineManiaChat.getInstance().getProxyServer().getPlayer(playerName).orElse(null);
 
@@ -153,7 +154,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
                 return;
             }
 
-            BreakoutChatManager.openNewChat(executor, player, silent, allowLeave);
+            BreakoutChatManager.openNewChat(executor, player, silent, locked);
         }
     }
 
@@ -179,10 +180,10 @@ public class BreakoutAdminCommand implements SimpleCommand {
     }
 
     private void handleEdit(Invocation invocation, String[] args) {
-        // /breakouta edit <chat> <name|silent|allowmemberleave> <value>
+        // /breakouta edit <chat> <name|silent|locked> <value>
 
         if (args.length != 4) {
-            invocation.source().sendPlainMessage("Usage: /breakouta edit <chat> <name|silent|allowmemberleave> <value>");
+            invocation.source().sendPlainMessage("Usage: /breakouta edit <chat> <name|silent|locked> <value>");
             return;
         }
 
@@ -199,12 +200,11 @@ public class BreakoutAdminCommand implements SimpleCommand {
 
         switch (property) {
             case "name" -> {
-                if (BreakoutChatManager.getBreakoutChat(value) != null) {
+                if (!BreakoutChatManager.renameChat(chat, value)) {
                     invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cBreakout chat with name &f" + value + " &calready exists"));
                     return;
                 }
 
-                chat.name = value;
                 invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Changed &f" + chatName + "&7To &f" + value));
             }
 
@@ -215,16 +215,16 @@ public class BreakoutAdminCommand implements SimpleCommand {
                 invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Changed &f" + chatName + "&7Silent property to &f" + silent));
             }
 
-            case "allowmemberleave" -> {
-                boolean allowMemberLeave = Boolean.parseBoolean(value);
+            case "locked" -> {
+                boolean locked = Boolean.parseBoolean(value);
 
-                chat.allowMemberLeave = allowMemberLeave;
-                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Changed &f" + chatName + "&7Allow Member Leave property to &f" + allowMemberLeave));
+                chat.locked = locked;
+                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7Changed &f" + chatName + "&7Locked property to &f" + locked));
             }
 
             default -> {
                 invocation.source().sendMessage(Component.text(">").decorate(TextDecoration.BOLD).color(NamedTextColor.RED).append(Component.text("Invalid property").color(NamedTextColor.RED)));
-                invocation.source().sendPlainMessage("Usage: /breakouta edit <chat> <name|silent|allowmemberleave> <value>");
+                invocation.source().sendPlainMessage("Usage: /breakouta edit <chat> <name|silent|locked> <value>");
             }
         }
     }
@@ -275,9 +275,9 @@ public class BreakoutAdminCommand implements SimpleCommand {
         invocation.source().sendMessage(Component.text("Usage:").decorate(TextDecoration.BOLD));
         invocation.source().sendPlainMessage("/breakouta move <player> <chat>");
         invocation.source().sendPlainMessage("/breakouta list");
-        invocation.source().sendPlainMessage("/breakouta open <player> <silent> <allowLeave>");
+        invocation.source().sendPlainMessage("/breakouta open <player> [silent] [locked]");
         invocation.source().sendPlainMessage("/breakouta close <chat>");
-        invocation.source().sendPlainMessage("/breakouta edit <chat> <name|silent|allowmemberleave> <value>");
+        invocation.source().sendPlainMessage("/breakouta edit <chat> <name|silent|locked> <value>");
         invocation.source().sendPlainMessage("/breakouta disable <chat>");
         invocation.source().sendPlainMessage("/breakouta enable <chat>");
     }
@@ -304,12 +304,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
          */
         if (args.length == 2) {
             return switch (subcommand) {
-                case "move" -> Stream.concat(
-                        suggestChats(args[1]).stream(),
-                        Stream.of("main")
-                ).toList();
-
-                case "open" -> suggestPlayers(args[1]);
+                case "move", "open" -> suggestPlayers(args[1]);
 
                 case "close",
                      "list",
@@ -325,11 +320,11 @@ public class BreakoutAdminCommand implements SimpleCommand {
          * /breakouta move <player> <chat>
          */
         if (args.length == 3 && subcommand.equals("move")) {
-            return suggestChats(args[2]);
+            return filter(Stream.concat(suggestChats(args[2]).stream(), Stream.of("main")).toList(), args[2]);
         }
 
         /*
-         * /breakouta open <player> <silent> <allowLeave>
+         * /breakouta open <player> [silent] [locked]
          */
         if (args.length == 3 && subcommand.equals("open")) {
             return filter(List.of("true", "false"), args[2]);
@@ -347,7 +342,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
                     List.of(
                             "name",
                             "silent",
-                            "allowmemberleave"
+                            "locked"
                     ),
                     args[2]
             );
@@ -357,7 +352,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
             String property = args[2].toLowerCase();
 
             if (property.equals("silent")
-                    || property.equals("allowmemberleave")) {
+                    || property.equals("locked")) {
                 return filter(List.of("true", "false"), args[3]);
             }
         }

@@ -27,19 +27,19 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.List;
 
 public class BreakoutChat {
 
-    public String name;
+    public volatile String name;
     public final Player creator;
-    public List<Player> members = new ArrayList<>();
-    public boolean silent;
-    public boolean allowMemberLeave;
-    public boolean enabled = true;
+    public final List<Player> members = new CopyOnWriteArrayList<>();
+    public volatile boolean silent;
+    public volatile boolean locked;
+    public volatile boolean enabled = true;
 
-    public BreakoutChat(Player creator, Player member, boolean silent, boolean allowMemberLeave) {
+    public BreakoutChat(Player creator, Player member, boolean silent, boolean locked) {
         name = member.getUsername() + "@" +  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"));
         this.creator = creator;
         if (member != creator) {
@@ -47,14 +47,13 @@ public class BreakoutChat {
         }
         this.members.add(member);
         this.silent = silent;
-        this.allowMemberLeave = allowMemberLeave;
+        this.locked = locked;
     }
 
     public void sendMessage(Component message) {
-        if (!enabled) return;
-
         for (Player p : members) {
-            p.sendMessage(message);
+            p.sendMessage(p.hasPermission("chat.breakout.notify") || p.hasPermission("chat.breakout.admin")
+                    ? Component.text("[Breakout: " + name + "] ").append(message) : message);
         }
         for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
             if (p.hasPermission("chat.breakout.notify")) {

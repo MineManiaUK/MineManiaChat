@@ -146,6 +146,10 @@ public class ChatHandler {
             BreakoutChat breakoutChat = BreakoutChatManager.getBreakoutChat(sendingPlayer);
 
             if (breakoutChat != null) {
+                if (!breakoutChat.enabled && !sendingPlayer.hasPermission("chat.bypass.disable")) {
+                    new User(sendingPlayer).sendMessage("&c&l> &7This breakout chat is currently &cdisabled");
+                    return;
+                }
                 breakoutChat.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(formattedMessage));
 
                 MineManiaChat.getInstance()
@@ -187,17 +191,7 @@ public class ChatHandler {
                     MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
                 }
             }
-
-
-
-
-
-
-
-
         }
-
-
 
     /**
      * Used to append chat formatting to the message.
@@ -350,11 +344,11 @@ public class ChatHandler {
         return time;
     }
 
-    public void notifyStaff(String name, String staffMessage, String discordTitle ,String message){
+    public void notifyStaff(String name, String staffMessage, String discordTitle ,String message) {
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
-        for (Player p : allPlayers){
-            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)){
+        for (Player p : allPlayers) {
+            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)) {
                 User u = new User(p);
                 u.sendMessage("&cPlayer " + name + " " + staffMessage + "\n" + message);
             }
@@ -367,7 +361,8 @@ public class ChatHandler {
 
         webhookManager.setListener(new WebhookClient.Callback() {
             @Override
-            public void onSuccess(String response) { }
+            public void onSuccess(String response) {
+            }
 
             @Override
             public void onFailure(int statusCode, String errorMessage) {
@@ -388,12 +383,8 @@ public class ChatHandler {
         embed.setTimestamp(formatedTimeNow);
 
         webhookManager.setMessage(new Message().setUsername("Minemania Chat Alert"));
-        webhookManager.setEmbeds(new Embed[] {embed});
+        webhookManager.setEmbeds(new Embed[]{embed});
 
         webhookManager.exec();
-    }
-
-    public void ForwardDiscordMessage() {
-
     }
 }
