@@ -30,6 +30,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public class BreakoutAdminCommand implements SimpleCommand {
 
@@ -130,7 +131,11 @@ public class BreakoutAdminCommand implements SimpleCommand {
         }
 
         for (BreakoutChat chat : BreakoutChatManager.breakoutChats) {
-            invocation.source().sendPlainMessage(chat.name);
+            String players = chat.members.stream()
+                    .map(Player::getUsername)
+                    .collect(Collectors.joining(", "));
+            invocation.source().sendMessage(Component.text(chat.name, NamedTextColor.WHITE)
+                    .append(Component.text(" - " + (players.isEmpty() ? "No players" : players), NamedTextColor.GRAY)));
         }
     }
 
@@ -159,20 +164,28 @@ public class BreakoutAdminCommand implements SimpleCommand {
     }
 
     private void handleClose(Invocation invocation, String[] args) {
-        // /breakouta close <chat>
-
-        if (args.length != 2) {
-            invocation.source().sendPlainMessage("Usage: /breakouta close <chat>");
+        if (args.length > 2) {
+            invocation.source().sendPlainMessage("Usage: /breakouta close [chat]");
             return;
         }
 
-        String chatName = args[1];
-
-        BreakoutChat chat = BreakoutChatManager.getBreakoutChat(chatName);
-
-        if (chat == null) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cBreakout chat &f" + chatName + " &cdoes not exist"));
-            return;
+        BreakoutChat chat;
+        if (args.length == 1) {
+            if (!(invocation.source() instanceof Player player)) {
+                invocation.source().sendPlainMessage("Usage: /breakouta close <chat>");
+                return;
+            }
+            chat = BreakoutChatManager.getBreakoutChat(player);
+            if (chat == null) {
+                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cYou are not in a breakout chat"));
+                return;
+            }
+        } else {
+            chat = BreakoutChatManager.getBreakoutChat(args[1]);
+            if (chat == null) {
+                invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cBreakout chat &f" + args[1] + " &cdoes not exist"));
+                return;
+            }
         }
 
         BreakoutChatManager.closeBreakoutChat(chat);
@@ -276,7 +289,7 @@ public class BreakoutAdminCommand implements SimpleCommand {
         invocation.source().sendPlainMessage("/breakouta move <player> <chat>");
         invocation.source().sendPlainMessage("/breakouta list");
         invocation.source().sendPlainMessage("/breakouta open <player> [silent] [locked]");
-        invocation.source().sendPlainMessage("/breakouta close <chat>");
+        invocation.source().sendPlainMessage("/breakouta close [chat]");
         invocation.source().sendPlainMessage("/breakouta edit <chat> <name|silent|locked> <value>");
         invocation.source().sendPlainMessage("/breakouta disable <chat>");
         invocation.source().sendPlainMessage("/breakouta enable <chat>");
