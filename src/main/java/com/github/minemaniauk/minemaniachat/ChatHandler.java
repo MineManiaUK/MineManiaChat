@@ -94,7 +94,7 @@ public class ChatHandler {
             // Check for banned words.
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
                 if (this.containsBannedWords(event.getMessage())) {
-                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+                    new User(sendingPlayer).sendMessage("&c&l> &cYour message was not sent");
                     notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
                     return;
                 }
@@ -103,7 +103,7 @@ public class ChatHandler {
             // Check for URLs
             if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
                 if (URL_PATTERN.matcher(event.getMessage()).find()) {
-                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+                    new User(sendingPlayer).sendMessage("&c&l> &cYour message was not sent");
                     notifyStaff(sendingPlayer.getUsername(), "Sent Message with a URL!", "URL Alert", event.getMessage());
                     return;
                 }

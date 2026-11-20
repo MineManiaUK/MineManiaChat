@@ -51,7 +51,7 @@ public class MessageHandler {
 
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
             if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
-                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                new User(from).sendMessage("&c&l> &cYour message was not sent");
                 MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message);
                 return;
             }
@@ -59,7 +59,7 @@ public class MessageHandler {
 
         if (!from.hasPermission("chat.bypass.filter.url")) {
             if (MineManiaChat.getInstance().getChatHandler().URL_PATTERN.matcher(message).find()) {
-                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                new User(from).sendMessage("&c&l> &cYour message was not sent");
                 MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with a URL!", "URL Alert", message);
                 return;
             }
@@ -67,7 +67,7 @@ public class MessageHandler {
 
         if (!from.hasPermission("chat.bypass.private-message.disablement")) {
             if (!MineManiaChat.getInstance().getDataManager().CanPlayerPm(from)) {
-                new User(from).sendMessage("&c&l> &cSomething went wrong.");
+                new User(from).sendMessage("&c&l> &cYour message was not sent");
                 MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " but has private messaging disabled", "PM disabled alert", message);
                 return;
             }
