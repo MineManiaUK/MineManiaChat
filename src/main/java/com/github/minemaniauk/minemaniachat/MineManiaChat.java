@@ -62,7 +62,8 @@ import java.nio.file.Path;
         name = "MineManiaChat",
         version = "3.6.0",
         dependencies = {
-                @Dependency(id = "cwvelocity", optional = true)
+                @Dependency(id = "cwvelocity", optional = true),
+                @Dependency(id= "luckperms")
         }
 )
 public class MineManiaChat {

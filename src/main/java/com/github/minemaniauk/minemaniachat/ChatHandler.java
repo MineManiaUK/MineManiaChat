@@ -34,6 +34,9 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.node.NodeType;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
@@ -200,26 +203,18 @@ public class ChatHandler {
      * @param player The instance of the player.
      */
     public String formatMessage(@NotNull String message, @NotNull Player player) {
-        ConfigurationSection formatSection = this.configuration.getSection("format");
 
-        String prefix = "";
-        String postfix = "";
+        net.luckperms.api.model.user.User lpUser = MineManiaChat.getInstance().getPermissionService().getLuckPerms().getUserManager().getUser(player.getUniqueId());
 
-        for (String key : formatSection.getKeys()) {
-            String permission = "chat." + key;
-            if (!player.hasPermission(permission)) continue;
+        String prefix = lpUser.getCachedData().getMetaData().getPrefix();
+        String suffix = lpUser.getCachedData().getMetaData().getSuffix();
 
-            prefix = formatSection.getSection(key).getString("prefix", "");
-            postfix = formatSection.getSection(key).getString("postfix", "");
-            break;
+        if (prefix == null || prefix.isBlank()) {
+            prefix = " ";
         }
 
-        if (!prefix.isBlank()) {
-            prefix = prefix + " ";
-        }
-
-        if (!postfix.isBlank()) {
-            postfix = " " + postfix;
+        if (suffix == null || suffix.isBlank()) {
+            suffix = "";
         }
 
         String displayMessage = message;
@@ -228,7 +223,7 @@ public class ChatHandler {
             displayMessage = escapeLegacyFormatting(displayMessage);
         }
 
-        return prefix + "&f" + player.getUsername() + " &7: &f" + displayMessage + "&f" + postfix;
+        return prefix + player.getUsername() + "&f" + suffix + " &7: &f" + displayMessage;
     }
 
     private String escapeLegacyFormatting(String message) {
