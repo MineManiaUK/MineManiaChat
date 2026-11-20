@@ -78,7 +78,6 @@ public class MineManiaChat {
     private final @NotNull Configuration linksConfiguration;
     private @NotNull ChatHandler chatHandler;
     private DataBaseController dbController;
-    private @NotNull BreakoutChatManager breakoutChatManager;
     private final @NotNull MessageHandler messageHandler;
     private final @NotNull DataManager dataManager;
     private final @NotNull Path playerDataPath;
