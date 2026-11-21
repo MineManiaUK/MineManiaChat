@@ -28,6 +28,7 @@ import com.eduardomcb.discord.webhook.models.Field;
 import com.eduardomcb.discord.webhook.models.Message;
 import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChat;
 import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChatManager;
+import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
@@ -39,6 +40,7 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.node.NodeType;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -56,6 +58,7 @@ public class ChatHandler {
 
     private final @NotNull Configuration configuration;
     private final @NotNull Configuration bannedWords;
+    private final Path playerDataPath;
     public final Pattern URL_PATTERN = Pattern.compile(
             "(?i)\\b(?:https?://|www\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.[a-z]{2,24}(?:/[^\\s]*)?"
     );
@@ -69,9 +72,10 @@ public class ChatHandler {
      * @param configuration The instance of the configuration
      *                      to format and filter the chat.
      */
-    public ChatHandler(@NotNull Configuration configuration, @NotNull Configuration bannedWords) {
+    public ChatHandler(@NotNull Configuration configuration, @NotNull Configuration bannedWords, Path playerDataPath) {
         this.configuration = configuration;
         this.bannedWords = bannedWords;
+        this.playerDataPath = playerDataPath;
     }
 
         @Subscribe
@@ -96,9 +100,10 @@ public class ChatHandler {
 
             // Check for banned words.
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
-                if (this.containsBannedWords(event.getMessage())) {
+                BannedWordsResult bannedWordsResult = checkBannedWords(event.getMessage(), sendingPlayer.getUniqueId());
+                if (bannedWordsResult.isBlocked()) {
                     new User(sendingPlayer).sendMessage("&c&l> &cYour message was not sent");
-                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
+                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage(), bannedWordsResult);
                     return;
                 }
             }
@@ -236,13 +241,34 @@ public class ChatHandler {
      * @param message The instance of the message.
      * @return True if it contains bad words.
      */
-    public boolean containsBannedWords(@NotNull String message) {
+    public boolean containsBannedWords(@NotNull String message, UUID playerId) {
+        return checkBannedWords(message, playerId).isBlocked();
+    }
+
+    public record BannedWordsResult(boolean main, boolean personal) {
+        public boolean isBlocked() {
+            return main || personal;
+        }
+
+        public String source() {
+            if (main && personal) return "main and personal lists";
+            if (main) return "main list";
+            if (personal) return "personal list";
+            return "neither list";
+        }
+    }
+
+    public BannedWordsResult checkBannedWords(@NotNull String message, UUID playerId) {
         message = String.join("", Arrays.stream(message.toLowerCase().split(""))
                 .filter(character -> character.matches("[a-zA-Z0-9 ]"))
                 .toList()
         );
-        List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
+        boolean main = matchesBannedWords(message, this.bannedWords.getListString("banned-words", List.of()));
+        boolean personal = playerId != null && matchesBannedWords(message, getIndividualBannedWordsList(playerId));
+        return new BannedWordsResult(main, personal);
+    }
 
+    private boolean matchesBannedWords(String message, List<String> bannedPhrases) {
         // Loop though each word in the message.
         for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {
 
@@ -272,6 +298,19 @@ public class ChatHandler {
         }
 
         return false;
+    }
+
+    private List<String> getIndividualBannedWordsList(UUID id) {
+        Configuration playerFile = ConfigurationFactory.YAML.create(playerDataPath.toFile(), id.toString());
+        playerFile.load();
+
+        List<String> bannedWords = playerFile.getListString("banned-words");
+
+        if (bannedWords.isEmpty()) {
+            return List.of();
+        }
+
+        return bannedWords;
     }
 
     public void updatePlayerMessageTimes(Player player) {
@@ -340,6 +379,14 @@ public class ChatHandler {
     }
 
     public void notifyStaff(String name, String staffMessage, String discordTitle ,String message) {
+        notifyStaff(name, staffMessage, discordTitle, message, null);
+    }
+
+    public void notifyStaff(String name, String staffMessage, String discordTitle, String message,
+                            BannedWordsResult bannedWordsResult) {
+        if (bannedWordsResult != null && bannedWordsResult.isBlocked() && bannedWordsResult.personal()) {
+            staffMessage += " (Blocked by " + bannedWordsResult.source() + ")";
+        }
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
         for (Player p : allPlayers) {
@@ -369,6 +416,9 @@ public class ChatHandler {
         String formatedTimeNow = timeNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         List<Field> fields = new ArrayList<>();
         fields.add(new Field("Player", name, false));
+        if (bannedWordsResult != null && bannedWordsResult.isBlocked()) {
+            fields.add(new Field("Blocked by", bannedWordsResult.source(), false));
+        }
 
         Embed embed = new Embed();
         embed.setColor(0xff0000);

@@ -101,9 +101,10 @@ public class DiscordListener extends ListenerAdapter {
                 .matcher(message)
                 .find();
 
-        boolean hasBannedWords = MineManiaChat.getInstance()
+        var bannedWordsResult = MineManiaChat.getInstance()
                 .getChatHandler()
-                .containsBannedWords(message);
+                .checkBannedWords(message, minecraftUuid);
+        boolean hasBannedWords = bannedWordsResult.isBlocked();
 
         CompletableFuture<Boolean> urlBypassFuture;
 
@@ -150,7 +151,7 @@ public class DiscordListener extends ListenerAdapter {
 
                     if (hasBannedWords && !hasBannedWordsBypass) {
                         event.getMessage().delete().queue();
-                        MineManiaChat.getInstance().getChatHandler().notifyStaff(member.getUser().getName(),  "Sent Message with Banned words! (via the discord bridge)", "Banned word Alert", message);
+                        MineManiaChat.getInstance().getChatHandler().notifyStaff(member.getUser().getName(),  "Sent Message with Banned words! (via the discord bridge)", "Banned word Alert", message, bannedWordsResult);
                         return false;
                     }
 

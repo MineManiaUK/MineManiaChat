@@ -122,7 +122,7 @@ public class MineManiaChat {
         this.linksConfiguration.load();
 
         // Create a new chat handler.
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         this.messageHandler = new MessageHandler();
         this.dataManager = new DataManager(this.dataPath, this.playerDataPath);
         if (configuration.getBoolean("database.enabled")){
@@ -145,7 +145,8 @@ public class MineManiaChat {
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
         cm.register(cm.metaBuilder("chatdisable").build(), new ChatDisable());
-        cm.register(cm.metaBuilder("mmchatbannedwords").build(), new BannedWords());
+        cm.register(cm.metaBuilder("bannedwords").build(), new BannedWords());
+        cm.register(cm.metaBuilder("playerbannedwords").build(), new PlayerBannedWords(this.playerDataPath));
         cm.register(cm.metaBuilder("mmchatreload").build(), new Reload());
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
@@ -275,7 +276,7 @@ public class MineManiaChat {
     public void reloadBannedWords() {
         this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.bannedWords.load();
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         this.server.getEventManager().register(this, this.chatHandler);
     }
 
@@ -284,7 +285,7 @@ public class MineManiaChat {
         this.configuration.load();
         this.bannedWords.load();
         this.discordConfig.load();
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         if (configuration.getBoolean("database.enabled")){
             this.dbController = new DataBaseController(this.configuration);
         }

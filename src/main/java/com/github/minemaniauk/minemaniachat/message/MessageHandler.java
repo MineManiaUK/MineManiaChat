@@ -50,9 +50,10 @@ public class MessageHandler {
         }
 
         if (!from.hasPermission("chat.bypass.filter.banned-words")) {
-            if (MineManiaChat.getInstance().getChatHandler().containsBannedWords(message)) {
+            var bannedWordsResult = MineManiaChat.getInstance().getChatHandler().checkBannedWords(message, from.getUniqueId());
+            if (bannedWordsResult.isBlocked()) {
                 new User(from).sendMessage("&c&l> &cYour message was not sent");
-                MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message);
+                MineManiaChat.getInstance().getChatHandler().notifyStaff(from.getUsername(), "Sent a private message to " + to.getUsername() + " with Banned words!", "Banned word Alert", message, bannedWordsResult);
                 return;
             }
         }

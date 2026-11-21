@@ -7,7 +7,8 @@ A chat plugin for velocity.
 
 - /chatenable | Permission: "chat.disable" | Enables chat globally for all players
 - /chatdisable | Permission: "chat.disable"| Disables chat globally for all players without "chat.joinmessage.disable"
-- /mmchatbannedwords \<add|check|remove\> \<word\> | Permission: "chat.bannedwords" | Edit or check the banned words list
+- /bannedwords \<add|check|remove\> \<word\> | Permission: "chat.bannedwords" | Edit or check the banned words list
+- /playerbannedwords \<player\> \<add|check|remove\> <\word\> | Permission: "chat.bannedwords" | Edit or check a players banned words list
 - /mmchatreload | Permission: "chat.reload" | Reloads all configs 
 - /clearchat or /cc | Permission: "chat.clear" | Clears the chat history
 - /joinmessagesend or /jmsend | Permission: "chat.joinmessage.fakesend" | Send a join message for yourself (For users with chat.joinmessage.disable)
