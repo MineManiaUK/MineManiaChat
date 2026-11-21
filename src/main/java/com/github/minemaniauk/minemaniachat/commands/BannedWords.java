@@ -33,7 +33,7 @@ public class BannedWords implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 2) {
-            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /mmchatbannedwords <add|check|remove> <word>"));
+            invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&c&l> &cUsage: /bannedwords <add|check|remove> <word>"));
             return;
         }
 
@@ -62,7 +62,7 @@ public class BannedWords implements SimpleCommand {
                 return;
             case "check":
                 try {
-                    boolean wordBanned = MineManiaChat.getInstance().getChatHandler().containsBannedWords(wordInput);
+                    boolean wordBanned = MineManiaChat.getInstance().getChatHandler().containsBannedWords(wordInput, null);
                     if (wordBanned){
                         invocation.source().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize("&7&l> &7\"" + "&f" + wordInput + "&7" + "\" is &cbanned"));
                     }

@@ -20,6 +20,10 @@
 
 package com.github.minemaniauk.minemaniachat;
 
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutAdminCommand;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChat;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChatManager;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutCommand;
 import com.github.minemaniauk.minemaniachat.commands.*;
 import com.github.minemaniauk.minemaniachat.discord.DiscordManager;
 import com.github.minemaniauk.minemaniachat.discord.EventTypes;
@@ -56,9 +60,10 @@ import java.nio.file.Path;
 @Plugin(
         id = "minemaniachat",
         name = "MineManiaChat",
-        version = "3.4.6",
+        version = "3.6.0",
         dependencies = {
-                @Dependency(id = "cwvelocity", optional = true)
+                @Dependency(id = "cwvelocity", optional = true),
+                @Dependency(id= "luckperms")
         }
 )
 public class MineManiaChat {
@@ -117,7 +122,7 @@ public class MineManiaChat {
         this.linksConfiguration.load();
 
         // Create a new chat handler.
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         this.messageHandler = new MessageHandler();
         this.dataManager = new DataManager(this.dataPath, this.playerDataPath);
         if (configuration.getBoolean("database.enabled")){
@@ -140,7 +145,8 @@ public class MineManiaChat {
 
         cm.register(cm.metaBuilder("chatenable").build(), new ChatEnable());
         cm.register(cm.metaBuilder("chatdisable").build(), new ChatDisable());
-        cm.register(cm.metaBuilder("mmchatbannedwords").build(), new BannedWords());
+        cm.register(cm.metaBuilder("bannedwords").build(), new BannedWords());
+        cm.register(cm.metaBuilder("playerbannedwords").build(), new PlayerBannedWords(this.playerDataPath));
         cm.register(cm.metaBuilder("mmchatreload").build(), new Reload());
         cm.register(cm.metaBuilder("clearchat").aliases("cc").build() , new ChatClear());
         cm.register(cm.metaBuilder("joinmessagesend").aliases("jmsend").build(), new JmSendCommand());
@@ -155,6 +161,8 @@ public class MineManiaChat {
         cm.register(cm.metaBuilder("chat").aliases("c", "talk").build(), new Chat());
         cm.register(cm.metaBuilder("mmchatspamcooldown").build(), new SpamCooldown());
         cm.register(cm.metaBuilder("list").aliases("listplayers").build(), new ListCommmand());
+        cm.register(cm.metaBuilder("breakout").build(), new BreakoutCommand());
+        cm.register(cm.metaBuilder("breakouta").build(), new BreakoutAdminCommand());
     }
 
     @Subscribe
@@ -191,7 +199,9 @@ public class MineManiaChat {
 
     @Subscribe
     public void OnShutdown(ProxyShutdownEvent event){
-        dbController.close();
+        if (dbController != null) {
+            dbController.close();
+        }
     }
 
     @Subscribe
@@ -212,6 +222,7 @@ public class MineManiaChat {
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
+        BreakoutChatManager.detachPlayer(event.getPlayer());
         if (event.getPlayer().hasPermission("chat.joinmessage.disable")){
             sendLeaveMessage(event.getPlayer(), true);
         }
@@ -265,7 +276,7 @@ public class MineManiaChat {
     public void reloadBannedWords() {
         this.server.getEventManager().unregisterListener(this, this.chatHandler);
         this.bannedWords.load();
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         this.server.getEventManager().register(this, this.chatHandler);
     }
 
@@ -274,7 +285,7 @@ public class MineManiaChat {
         this.configuration.load();
         this.bannedWords.load();
         this.discordConfig.load();
-        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords);
+        this.chatHandler = new ChatHandler(this.configuration, this.bannedWords, this.playerDataPath);
         if (configuration.getBoolean("database.enabled")){
             this.dbController = new DataBaseController(this.configuration);
         }

@@ -48,4 +48,8 @@ public class PermissionService {
                             .asBoolean();
                 });
     }
+
+    public LuckPerms getLuckPerms() {
+        return luckPerms;
+    }
 }

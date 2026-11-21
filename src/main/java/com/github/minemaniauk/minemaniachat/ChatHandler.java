@@ -26,14 +26,21 @@ import com.eduardomcb.discord.webhook.WebhookManager;
 import com.eduardomcb.discord.webhook.models.Embed;
 import com.eduardomcb.discord.webhook.models.Field;
 import com.eduardomcb.discord.webhook.models.Message;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChat;
+import com.github.minemaniauk.minemaniachat.breakoutchat.BreakoutChatManager;
+import com.github.smuddgge.squishyconfiguration.ConfigurationFactory;
 import com.github.smuddgge.squishyconfiguration.interfaces.Configuration;
 import com.github.smuddgge.squishyconfiguration.interfaces.ConfigurationSection;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.node.NodeType;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -51,6 +58,7 @@ public class ChatHandler {
 
     private final @NotNull Configuration configuration;
     private final @NotNull Configuration bannedWords;
+    private final Path playerDataPath;
     public final Pattern URL_PATTERN = Pattern.compile(
             "(?i)\\b(?:https?://|www\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.[a-z]{2,24}(?:/[^\\s]*)?"
     );
@@ -64,9 +72,10 @@ public class ChatHandler {
      * @param configuration The instance of the configuration
      *                      to format and filter the chat.
      */
-    public ChatHandler(@NotNull Configuration configuration, @NotNull Configuration bannedWords) {
+    public ChatHandler(@NotNull Configuration configuration, @NotNull Configuration bannedWords, Path playerDataPath) {
         this.configuration = configuration;
         this.bannedWords = bannedWords;
+        this.playerDataPath = playerDataPath;
     }
 
         @Subscribe
@@ -91,9 +100,10 @@ public class ChatHandler {
 
             // Check for banned words.
             if (!sendingPlayer.hasPermission("chat.bypass.filter.banned-words")) {
-                if (this.containsBannedWords(event.getMessage())) {
-                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
-                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage());
+                BannedWordsResult bannedWordsResult = checkBannedWords(event.getMessage(), sendingPlayer.getUniqueId());
+                if (bannedWordsResult.isBlocked()) {
+                    new User(sendingPlayer).sendMessage("&c&l> &cYour message was not sent");
+                    notifyStaff(sendingPlayer.getUsername(), "Sent Message with Banned words!", "Banned word Alert", event.getMessage(), bannedWordsResult);
                     return;
                 }
             }
@@ -101,7 +111,7 @@ public class ChatHandler {
             // Check for URLs
             if (!sendingPlayer.hasPermission("chat.bypass.filter.url")) {
                 if (URL_PATTERN.matcher(event.getMessage()).find()) {
-                    new User(sendingPlayer).sendMessage("&c&l> &cSomething went wrong.");
+                    new User(sendingPlayer).sendMessage("&c&l> &cYour message was not sent");
                     notifyStaff(sendingPlayer.getUsername(), "Sent Message with a URL!", "URL Alert", event.getMessage());
                     return;
                 }
@@ -141,30 +151,55 @@ public class ChatHandler {
 
             String formattedMessage = this.formatMessage(event.getMessage(), sendingPlayer);
 
-            for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
-                p.sendMessage(
+            BreakoutChat breakoutChat = BreakoutChatManager.getBreakoutChat(sendingPlayer);
+
+            if (breakoutChat != null) {
+                if (!breakoutChat.enabled && !sendingPlayer.hasPermission("chat.bypass.disable")) {
+                    new User(sendingPlayer).sendMessage("&c&l> &7This breakout chat is currently &cdisabled");
+                    return;
+                }
+                breakoutChat.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(formattedMessage));
+
+                MineManiaChat.getInstance()
+                        .getDiscordManager()
+                        .sendMessageDiscordLogWebhook(
+                                sendingPlayer,
+                                "**[Breakout] (" + breakoutChat.name + ")** " + event.getMessage()
+                        );
+
+                MineManiaChat.getInstance()
+                        .getLogger()
+                        .info(
+                                LegacyComponentSerializer.legacyAmpersand()
+                                        .deserialize(
+                                                "&7(&a" + breakoutChat.getName() + "&7) "
+                                                        + formattedMessage
+                                        )
+                        );
+
+            }
+            else {
+                for (Player p : MineManiaChat.getInstance().getProxyServer().getAllPlayers()) {
+                    p.sendMessage(
+                            LegacyComponentSerializer.legacyAmpersand().deserialize(
+                                    formattedMessage
+                            )
+                    );
+                }
+
+                MineManiaChat.getInstance().getDiscordManager().sendMessageDiscordLogWebhook(sendingPlayer, event.getMessage());
+
+                MineManiaChat.getInstance().getLogger().info(
                         LegacyComponentSerializer.legacyAmpersand().deserialize(
                                 formattedMessage
                         )
                 );
-            }
 
-            MineManiaChat.getInstance().getDiscordManager().sendMessageDiscordLogWebhook(sendingPlayer, event.getMessage());
-
-            MineManiaChat.getInstance().getLogger().info(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize(
-                            formattedMessage
-                    )
-            );
-
-
-
-            if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
-                MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
+                if (MineManiaChat.getInstance().getDiscordConfig().getBoolean("enabled")) {
+                    MineManiaChat.getInstance().getDiscordManager().forwardInGameMessage(sendingPlayer, event.getMessage());
+                }
             }
         }
-
-
 
     /**
      * Used to append chat formatting to the message.
@@ -173,26 +208,18 @@ public class ChatHandler {
      * @param player The instance of the player.
      */
     public String formatMessage(@NotNull String message, @NotNull Player player) {
-        ConfigurationSection formatSection = this.configuration.getSection("format");
 
-        String prefix = "";
-        String postfix = "";
+        net.luckperms.api.model.user.User lpUser = MineManiaChat.getInstance().getPermissionService().getLuckPerms().getUserManager().getUser(player.getUniqueId());
 
-        for (String key : formatSection.getKeys()) {
-            String permission = "chat." + key;
-            if (!player.hasPermission(permission)) continue;
+        String prefix = lpUser.getCachedData().getMetaData().getPrefix();
+        String suffix = lpUser.getCachedData().getMetaData().getSuffix();
 
-            prefix = formatSection.getSection(key).getString("prefix", "");
-            postfix = formatSection.getSection(key).getString("postfix", "");
-            break;
+        if (prefix == null || prefix.isBlank()) {
+            prefix = " ";
         }
 
-        if (!prefix.isBlank()) {
-            prefix = prefix + " ";
-        }
-
-        if (!postfix.isBlank()) {
-            postfix = " " + postfix;
+        if (suffix == null || suffix.isBlank()) {
+            suffix = "";
         }
 
         String displayMessage = message;
@@ -201,7 +228,7 @@ public class ChatHandler {
             displayMessage = escapeLegacyFormatting(displayMessage);
         }
 
-        return prefix + "&f" + player.getUsername() + " &7: &f" + displayMessage + "&f" + postfix;
+        return prefix + player.getUsername() + "&f" + suffix + " &7: &f" + displayMessage;
     }
 
     private String escapeLegacyFormatting(String message) {
@@ -214,13 +241,34 @@ public class ChatHandler {
      * @param message The instance of the message.
      * @return True if it contains bad words.
      */
-    public boolean containsBannedWords(@NotNull String message) {
+    public boolean containsBannedWords(@NotNull String message, UUID playerId) {
+        return checkBannedWords(message, playerId).isBlocked();
+    }
+
+    public record BannedWordsResult(boolean main, boolean personal) {
+        public boolean isBlocked() {
+            return main || personal;
+        }
+
+        public String source() {
+            if (main && personal) return "main and personal lists";
+            if (main) return "main list";
+            if (personal) return "personal list";
+            return "neither list";
+        }
+    }
+
+    public BannedWordsResult checkBannedWords(@NotNull String message, UUID playerId) {
         message = String.join("", Arrays.stream(message.toLowerCase().split(""))
                 .filter(character -> character.matches("[a-zA-Z0-9 ]"))
                 .toList()
         );
-        List<String> bannedPhrases = this.bannedWords.getListString("banned-words", new ArrayList<>());
+        boolean main = matchesBannedWords(message, this.bannedWords.getListString("banned-words", List.of()));
+        boolean personal = playerId != null && matchesBannedWords(message, getIndividualBannedWordsList(playerId));
+        return new BannedWordsResult(main, personal);
+    }
 
+    private boolean matchesBannedWords(String message, List<String> bannedPhrases) {
         // Loop though each word in the message.
         for (final String bannedPhrase : bannedPhrases.stream().map(String::toLowerCase).toList()) {
 
@@ -250,6 +298,19 @@ public class ChatHandler {
         }
 
         return false;
+    }
+
+    private List<String> getIndividualBannedWordsList(UUID id) {
+        Configuration playerFile = ConfigurationFactory.YAML.create(playerDataPath.toFile(), id.toString());
+        playerFile.load();
+
+        List<String> bannedWords = playerFile.getListString("banned-words");
+
+        if (bannedWords.isEmpty()) {
+            return List.of();
+        }
+
+        return bannedWords;
     }
 
     public void updatePlayerMessageTimes(Player player) {
@@ -317,24 +378,39 @@ public class ChatHandler {
         return time;
     }
 
-    public void notifyStaff(String name, String staffMessage, String discordTitle ,String message){
+    public void notifyStaff(String name, String staffMessage, String discordTitle ,String message) {
+        notifyStaff(name, staffMessage, discordTitle, message, null);
+    }
+
+    public void notifyStaff(String name, String staffMessage, String discordTitle, String message,
+                            BannedWordsResult bannedWordsResult) {
+        if (bannedWordsResult != null && bannedWordsResult.isBlocked() && bannedWordsResult.personal()) {
+            staffMessage += " (Blocked by " + bannedWordsResult.source() + ")";
+        }
         Collection<Player> allPlayers = MineManiaChat.getInstance().getProxyServer().getAllPlayers();
 
-        for (Player p : allPlayers){
-            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)){
+        for (Player p : allPlayers) {
+            if (p.hasPermission("chat.notify") && MineManiaChat.getInstance().getDataManager().isStaffAlertsEnabled(p)) {
                 User u = new User(p);
                 u.sendMessage("&cPlayer " + name + " " + staffMessage + "\n" + message);
             }
         }
 
-        if (!configuration.getBoolean("webhook-enabled") || configuration.getString("webhook-url").isEmpty())
+        if (!configuration.getBoolean("webhook-enabled")) {
             return;
+        }
 
-        WebhookManager webhookManager = new WebhookManager().setChannelUrl(configuration.getString("webhook-url"));
+        String webhookUrl = configuration.getString("webhook-url");
+        if (webhookUrl == null || webhookUrl.isBlank()) {
+            return;
+        }
+
+        WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl.trim());
 
         webhookManager.setListener(new WebhookClient.Callback() {
             @Override
-            public void onSuccess(String response) { }
+            public void onSuccess(String response) {
+            }
 
             @Override
             public void onFailure(int statusCode, String errorMessage) {
@@ -346,6 +422,9 @@ public class ChatHandler {
         String formatedTimeNow = timeNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         List<Field> fields = new ArrayList<>();
         fields.add(new Field("Player", name, false));
+        if (bannedWordsResult != null && bannedWordsResult.isBlocked()) {
+            fields.add(new Field("Blocked by", bannedWordsResult.source(), false));
+        }
 
         Embed embed = new Embed();
         embed.setColor(0xff0000);
@@ -355,12 +434,8 @@ public class ChatHandler {
         embed.setTimestamp(formatedTimeNow);
 
         webhookManager.setMessage(new Message().setUsername("Minemania Chat Alert"));
-        webhookManager.setEmbeds(new Embed[] {embed});
+        webhookManager.setEmbeds(new Embed[]{embed});
 
         webhookManager.exec();
-    }
-
-    public void ForwardDiscordMessage() {
-
     }
 }

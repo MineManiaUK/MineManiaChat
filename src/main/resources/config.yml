@@ -17,8 +17,8 @@ discord-enabled: true
 clear-chat-lines: 100
 
 # Discord alert webhook URL
-webhook-enabled:
-webhook-url:
+webhook-enabled: false
+webhook-url: ""
 
 # Logging webhook
 webhook-logging-url:
@@ -45,11 +45,3 @@ database:
     url: ""
     user: ""
     password: ""
-
-# In order of priority.
-# The first one will have the most priority.
-format:
-  # This will have the permissions chat.default
-  default:
-    prefix: ""
-    postfix: ""
