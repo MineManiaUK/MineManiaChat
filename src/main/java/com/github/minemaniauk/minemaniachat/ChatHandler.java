@@ -396,10 +396,16 @@ public class ChatHandler {
             }
         }
 
-        if (!configuration.getBoolean("webhook-enabled") || configuration.getString("webhook-url").isEmpty())
+        if (!configuration.getBoolean("webhook-enabled")) {
             return;
+        }
 
-        WebhookManager webhookManager = new WebhookManager().setChannelUrl(configuration.getString("webhook-url"));
+        String webhookUrl = configuration.getString("webhook-url");
+        if (webhookUrl == null || webhookUrl.isBlank()) {
+            return;
+        }
+
+        WebhookManager webhookManager = new WebhookManager().setChannelUrl(webhookUrl.trim());
 
         webhookManager.setListener(new WebhookClient.Callback() {
             @Override

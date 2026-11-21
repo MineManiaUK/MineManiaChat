@@ -25,6 +25,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.luckperms.api.model.group.Group;
@@ -68,15 +69,22 @@ public class DiscordPlayersCommand extends ListenerAdapter {
 
             prefix = PlainTextComponentSerializer.plainText().serialize(
                     LegacyComponentSerializer.legacyAmpersand().deserialize(prefix)
-            );
+            ).trim();
 
-            output.append(prefix)
-                    .append(":\n ");
+            if (prefix.isBlank()) {
+                prefix = group.getName();
+            }
+
+            output.append("**")
+                    .append(MarkdownSanitizer.escape(prefix))
+                    .append("** · ")
+                    .append(entry.getValue().size())
+                    .append("\n");
 
             String playerNames = entry.getValue().stream()
-                    .map(player -> "`" + player.getUsername() + "` [" + player.getCurrentServer()
-                            .map(server -> server.getServerInfo().getName())
-                            .orElse("Unknown") + "]")
+                    .map(player -> "• **" + MarkdownSanitizer.escape(player.getUsername()) + "** `[" + player.getCurrentServer()
+                            .map(server -> server.getServerInfo().getName().replace("`", "'"))
+                            .orElse("Unknown") + "]`")
                     .sorted(String.CASE_INSENSITIVE_ORDER)
                     .collect(Collectors.joining("\n"));
 

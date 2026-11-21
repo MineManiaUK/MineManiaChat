@@ -67,7 +67,7 @@ public class ListCommmand implements SimpleCommand {
                             .append(" &7[&f")
                             .append(player.getValue())
                             .append("&7]")
-                            .append("\n"));
+                            .append(" | "));
 
             output.append("\n");
         }
